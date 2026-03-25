@@ -1,7 +1,9 @@
 # Projet de certification - Recommandation de destination (ML)
 
 ## 📌 Présentation
+
 Mon projet est une application basée sur le machine learning qui analyse le profil des voyageurs pour recommander des destinations adaptées. Elle prend en compte les préférences, le budget et le style de voyage. Elle permet aussi d’identifier des destinations sous-cotées, moins connues mais intéressantes.
+
 ---
 
 ## 🧭 Architecture des données
