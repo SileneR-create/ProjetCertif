@@ -1,6 +1,6 @@
 import sqlite3
 import os
-from config import OUTPUT_CSV, OUTPUT_DB, TABLE_NAME
+from src.config import OUTPUT_CSV, OUTPUT_DB, TABLE_NAME
 
 def load(df):
     print("💾 [LOAD] Sauvegarde des données...")

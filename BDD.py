@@ -2,7 +2,7 @@ import sqlite3
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent
-DB_PATH  = BASE_DIR / "BDD_Projet_Certif.db"
+DB_PATH  = BASE_DIR / "database\BDD_Projet_Certif.db"
 SCHEMA   = BASE_DIR / "schema.sql"
 
 def connexion() -> sqlite3.Connection:
