@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS Profils_voyageurs(
     niveau_confort INTEGER,
     durée_voyage_jour INTEGER,
     nb_voyageur INTEGER,
-    climat_souhaite TEXT,
+    temperature_souhaite TEXT,
     id_user INTEGER,
     FOREIGN KEY(id_user)
     REFERENCES Users(id_user)
@@ -27,17 +27,19 @@ CREATE TABLE IF NOT EXISTS Destinations(
     ville TEXT,
     code_pays_iso3 TEXT,
     continent TEXT,
-    type_climat TEXT,
+    avg_temperature FLOAT,
+    min_temperature FLOAT,
+    max_temperature FLOAT,
     latitude FLOAT,
     longitude FLOAT
 );
 
 CREATE TABLE IF NOT EXISTS preference_activite(
     priorite TEXT,
-    id_user INTEGER,
+    id_profil INTEGER,
     id_activite INTEGER,
-    FOREIGN KEY(id_user)
-    REFERENCES Users(id_user),
+    FOREIGN KEY(id_profil)
+    REFERENCES Profils_voyageurs(id_profil),
     FOREIGN KEY(id_activite)
     REFERENCES Activites(id_activite)
 );
@@ -50,10 +52,10 @@ CREATE TABLE IF NOT EXISTS Recommandations(
     score_securite INTEGER,
     score_climat INTEGER,
     date_generation DATE,
-    id_user INTEGER,
+    id_profil INTEGER,
     id_destination INTEGER, 
-    FOREIGN KEY(id_user)
-    REFERENCES Users(id_user),
+    FOREIGN KEY(id_profil)
+    REFERENCES Profils_voyageurs(id_profil),
     FOREIGN KEY(id_destination)
     REFERENCES Destinations(id_destination)
 );

@@ -9,9 +9,13 @@ Mon projet est une application basée sur le machine learning qui analyse le pro
 ## 🧭 Architecture des données
 
 ### 🔹 MCD
-👉 [Voir le MCD](mcd_merise_travel_recommender_v2.html)
+![MCD](MCD.png)
+
+### 🔹 MLD
+![MLD](MLD.png)
 
 ### 🔹 MPD
+![MPD](MPD.png)
 
 #### 🗄️ Base de données : `BDD_Projet_Certif`
 

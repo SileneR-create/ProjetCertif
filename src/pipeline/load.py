@@ -5,9 +5,6 @@ from src.config import OUTPUT_CSV, OUTPUT_DB, TABLE_NAME
 def load(df):
     print("💾 [LOAD] Sauvegarde des données...")
 
-    # Créer le dossier output si nécessaire
-    os.makedirs("output", exist_ok=True)
-
     # Sauvegarde CSV
     df.to_csv(OUTPUT_CSV, index=False, encoding="utf-8-sig")
     print(f"✅ CSV sauvegardé : {OUTPUT_CSV}")
