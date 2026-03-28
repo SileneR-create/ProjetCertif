@@ -1,0 +1,105 @@
+code_3L,City,culture,adventure,nature,beaches,nightlife,cuisine,wellness,urban,seclusion
+AGO,Luanda,3,3,3,3,3,4,2,3,2
+BDI,Bujumbura,3,3,4,3,2,3,2,2,4
+BGD,Dhaka,4,2,2,1,3,4,2,3,1
+BWA,Maun,3,5,5,1,2,3,3,2,4
+CAN,Whistler,3,5,5,2,3,3,4,2,4
+CAN,Toronto,4,3,3,2,4,4,3,5,2
+CAN,Edmonton,4,3,4,1,3,3,3,3,2
+CAN,Banff,3,5,5,1,2,3,4,2,4
+CAN,Québec City,5,3,4,2,3,4,3,3,3
+CAN,Charlottetown,4,3,4,3,2,3,3,2,4
+CAN,Calgary,4,4,5,1,3,3,3,4,3
+CAN,Halifax,4,3,4,3,3,4,3,3,4
+CAN,Ottawa,4,3,4,2,3,3,3,3,3
+CAN,Montreal,5,3,3,2,4,5,3,5,2
+CAN,Vancouver,4,4,5,3,4,4,4,5,3
+CAN,Quebec City,5,3,4,2,3,4,3,4,3
+CAN,Niagara Falls,3,4,5,2,3,3,3,3,2
+CAN,Vancouver Island,3,4,5,4,2,3,4,2,4
+CRI,Monteverde,3,5,5,1,2,3,3,1,4
+CRI,San José,3,4,5,2,3,4,4,3,3
+CRI,Manuel Antonio National Park,2,4,5,5,2,3,3,1,4
+CUB,Havana,5,3,3,3,4,4,2,3,2
+CUB,Trinidad,5,3,4,3,3,4,3,2,4
+FRA,Marseille,4,3,3,3,4,4,3,4,2
+FRA,Annecy,4,4,5,3,3,4,3,3,4
+FRA,Nantes,4,2,3,2,3,4,3,4,3
+FRA,Bordeaux,4,2,3,2,3,5,3,4,3
+FRA,Strasbourg,5,2,3,1,3,4,3,4,3
+FRA,Carcassonne,5,2,3,1,2,4,3,3,4
+FRA,Paris,5,2,3,1,5,5,4,5,2
+FRA,Biarritz,3,4,4,5,3,4,4,3,3
+FRA,Rennes,4,2,3,2,3,4,3,3,3
+FRA,Lyon,5,2,3,1,4,5,3,4,2
+FRA,Carcassone,5,2,3,1,2,4,2,2,3
+FRA,Ajaccio,4,3,4,4,3,4,3,3,4
+FRA,Toulouse,4,3,3,2,4,4,3,4,2
+FRA,Colmar,4,2,3,1,2,4,3,2,4
+FRA,Lille,4,2,2,1,3,4,3,4,2
+GAB,Libreville,3,3,4,3,3,3,2,3,3
+GHA,Accra,4,3,3,3,3,4,3,3,2
+GUY,Georgetown,4,4,5,2,3,3,3,3,4
+HKG,Hong Kong,5,3,3,2,5,5,3,5,2
+KEN,Nairobi,4,4,5,1,3,3,3,4,2
+KEN,Mombasa,4,4,4,5,3,4,3,3,3
+KGZ,Bishkek,3,4,4,1,3,3,2,3,4
+LKA,Colombo,4,3,3,3,3,4,3,4,2
+LKA,Galle,4,3,4,4,2,4,3,3,4
+LKA,Kandy,5,3,4,1,2,4,3,3,3
+LKA,Nuwara Eliya,3,3,5,1,2,3,4,2,4
+LSO,Maseru,3,4,4,1,2,2,2,2,3
+LUX,Luxembourg City,4,2,3,1,3,4,3,4,3
+MCO,Monaco,4,2,3,3,5,4,3,5,2
+MDG,Antananarivo,4,4,5,2,3,3,2,3,4
+MDV,Malé,2,3,5,5,2,3,4,3,3
+MOZ,Maputo,3,3,4,4,3,4,3,3,2
+MOZ,Beira,3,3,3,3,2,3,2,2,3
+MWI,Blantyre,3,3,4,1,2,3,2,3,4
+NIC,Granada,4,3,4,2,3,4,3,3,3
+OMN,Salalah,3,3,5,4,2,3,3,2,4
+OMN,Muscat,4,3,4,4,2,4,3,3,4
+PAK,Lahore,5,3,2,1,3,5,3,4,2
+PAK,Islamabad,4,3,5,1,2,4,3,3,4
+PAN,Bocas del Toro,3,4,5,5,3,3,3,2,4
+PAN,Panama City,4,3,4,3,4,4,3,4,2
+PHL,Manila,4,3,2,2,4,4,3,4,1
+PHL,Davao,3,4,5,3,3,4,3,3,4
+PHL,Cebu,3,4,5,5,3,4,3,3,3
+PHL,Palawan,3,4,5,5,2,3,3,2,5
+PLW,Palau,3,5,5,5,2,3,3,2,4
+PRT,Porto,4,3,3,3,4,5,3,4,3
+PRT,Azores,3,4,5,3,2,4,3,2,5
+PRT,Madeira,3,4,5,3,3,4,4,3,4
+PRT,Lagos,3,4,4,5,4,4,3,3,3
+PRT,Sintra,5,3,5,2,2,4,3,3,4
+PRT,Lisbon,5,3,3,3,4,5,3,4,2
+PRT,Algarve,3,4,4,5,3,4,4,3,3
+PRT,Guimarães,4,3,3,1,2,4,3,3,3
+PRT,Vilamoura,3,3,4,5,4,4,4,3,3
+PRT,Braga,4,2,3,2,3,4,3,3,3
+PRT,Funchal,4,3,5,3,3,4,4,3,4
+PRY,Asunción,3,2,3,1,3,3,2,3,3
+RWA,Kigali,4,3,4,1,2,3,3,3,4
+SUR,Paramaribo,4,3,4,2,3,4,3,3,3
+SYC,Victoria,3,4,5,5,3,4,4,2,4
+SYC,Seychelles,2,3,5,5,2,4,4,2,5
+TGO,Lomé,3,3,3,3,2,3,2,3,3
+TON,Nukuʻalofa,3,3,4,4,2,3,3,2,4
+UKR,Odessa,4,3,3,4,4,4,3,4,2
+UKR,Kyiv,4,3,3,1,4,4,3,4,2
+UKR,Lviv,5,2,3,1,3,4,3,3,3
+URY,Montevideo,4,3,3,3,3,4,3,4,3
+URY,Punta del Este,3,3,3,5,5,4,3,4,2
+VNM,Hoi An,5,3,3,3,2,5,3,2,4
+VNM,Da Lat,3,4,5,1,2,4,4,3,4
+VNM,Sapa,4,4,5,1,2,3,3,2,4
+VNM,Ho Chi Minh City,4,3,2,2,4,5,3,5,2
+VNM,Hanoi,5,3,3,1,3,5,3,4,2
+VNM,Hue,5,3,3,2,2,4,3,3,4
+VNM,Ha Long,3,4,5,3,2,4,3,2,4
+VUT,Port Vila,3,4,5,4,2,3,4,2,4
+VUT,Tanna Island,4,4,5,4,1,3,3,1,5
+VUT,Espiritu Santo,3,4,5,5,2,3,3,1,4
+WSM,Apia,4,3,4,4,2,3,3,2,4
+ZWE,Harare,3,3,4,1,2,3,2,3,3

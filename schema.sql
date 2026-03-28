@@ -17,19 +17,16 @@ CREATE TABLE IF NOT EXISTS Profils_voyageurs(
 
 CREATE TABLE IF NOT EXISTS Activites(
     id_activite INTEGER PRIMARY KEY AUTOINCREMENT,
-    nom_activite TEXT, 
-    categorie TEXT
+    nom_activite TEXT
 );
 
 CREATE TABLE IF NOT EXISTS Destinations(
     id_destination INTEGER PRIMARY KEY AUTOINCREMENT,
-    pays TEXT,
-    ville TEXT,
-    code_pays_iso3 TEXT,
-    continent TEXT,
-    avg_temperature FLOAT,
-    min_temperature FLOAT,
-    max_temperature FLOAT,
+    country TEXT,
+    City TEXT,
+    code_3L TEXT,
+    region TEXT,
+    short_description TEXT,
     latitude FLOAT,
     longitude FLOAT
 );
@@ -69,13 +66,15 @@ CREATE TABLE IF NOT EXISTS activites_destination(
     REFERENCES Activites(id_activite)
 );
 
-CREATE TABLE IF NOT EXISTS saisonnalites(
-    id_saisonnalite INTEGER PRIMARY KEY AUTOINCREMENT,
-    mois INTEGER,
-    condition_meteo TEXT,
-    temps_moy_celsius INTEGER,
-    precipitation_mm INTEGER,
-    recommandation TEXT,
+CREATE TABLE IF NOT EXISTS meteo(
+    id_meteo INTEGER PRIMARY KEY AUTOINCREMENT,
+    country TEXT,
+    code_3L TEXT,
+    City TEXT,
+    month INTEGER,
+    temp_avg FLOAT,
+    temp_min FLOAT,
+    temp_max FLOAT,
     id_destination INTEGER,
     FOREIGN KEY (id_destination)
     REFERENCES Destinations(id_destination)
@@ -90,7 +89,7 @@ CREATE TABLE IF NOT EXISTS Indicateurs_WorldBank(
     valeur INTEGER,
     annee INTEGER,
     date_import DATE,
-    id_destination INTEGER,
-    FOREIGN KEY(id_destination) 
-    REFERENCES Destinations(id_destination)
+    code_3L TEXT,
+    FOREIGN KEY(code_3L) 
+    REFERENCES Destinations(code_3L)
 );
