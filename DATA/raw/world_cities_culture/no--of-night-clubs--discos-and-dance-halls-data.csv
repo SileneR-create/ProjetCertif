@@ -1,0 +1,20 @@
+City,Value,Date,Source,Notes
+Amsterdam,541,2024,Atlas Research,
+Austin,280,2024,Visit Austin,https://www.austintexas.org/things-to-do/nightlife/?skip=0
+Barcelona,97,2024,Ajuntament de Barcelona,"Data from 2025. We cannot provide data from previous years, because historical data is not preserved in the directories; https://guia.barcelona.cat/en/llistat?&pg=search&xout=1&ajax=search&af=code_prop&wtarget=la-meva-barcelona&nfwt=1&code0=0062001004&sort=namesort,asc&nr=10&c=00620*&tr=620&code1=0062002004014"
+Boston,118,2022,US Census,"Includes establishments with the 2017 NAICS code: '722410': 'Drinking Places (Alcoholic Beverages'. Includes bars, taverns, and nightclubs"
+Cologne,21,2022,Statistical Yearbook 2023,Gesamtdokument
+Dublin,23,2024,Give us the night,Has declined from 100 in 2000
+Edinburgh,45,,NOMIS,NOMIS - Local Business units â€” Local units by industry...More +
+Helsinki,90,2024,Supplied by City,
+London,515,2024,UK Business Counts,Nomis - Query Tool - UK Business Counts - local units by industry and employment size band -
+Melbourne,112,2018,Yellow Pages,
+Milan,316,,Supplied by City,
+Nanjing,217,2024,Supplied by City,
+New York,2400,2023,NYC Mayor’s Office of Media and Entertainment,"Latest data is from 2019 report; ""NYC’s Nightlife Economy
+Impact, Assets, and Opportunities"" (2019) Commissioned by Office of Media and Entertainment"
+Paris,125,2024,Pages Jaunes,"Search ""Discothèques"" on 27 June 2019, 3 March 2022 and 14 april 2024"
+Stockholm,102,2021,Supplied by City,Cultural Footprint survey; CFP_Stockholm_sv_Go6cUh7.pdf
+Taipei,23,2024,Taipei City Office of Commerce Specific Industry Management System,
+Tokyo,9879,2018,Ministry of Internal Affairs and Communications Statistics Bureau,"The following figures are taken from the Japanese Standard Industrial Classification: 766 Bars, cabarets, nightclubs ""Economic Census Activity Survey"""
+Toronto,483,2019,Supplied by City,
