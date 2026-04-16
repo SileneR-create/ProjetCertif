@@ -1,4 +1,4 @@
 .env
 diag.py
 front
-Notebook/*.pkl
+*.pkl
