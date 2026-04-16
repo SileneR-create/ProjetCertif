@@ -1,5 +1,5 @@
 import wbgapi as wb
-from src.config import PAYS_CODES, INDICATEURS, ANNEES
+from backend.src.config import PAYS_CODES, INDICATEURS, ANNEES
 
 def extract():
     print("📥 [EXTRACT] Téléchargement des données World Bank...")

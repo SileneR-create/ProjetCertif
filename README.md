@@ -310,13 +310,4 @@ TABLE Indicateurs_WorldBank(
 
 
 
-these <mark>very important words</mark>
-
-
-
-
-
-| Syntax | Description |
-| ----------- | ----------- |
-| Header | Title |
-| Paragraph | Text |
+<mark>En cours</mark>

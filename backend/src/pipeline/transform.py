@@ -1,5 +1,5 @@
 import pandas as pd
-from src.config import INDICATEURS
+from backend.src.config import INDICATEURS
 
 def transform(df):
     print("🔧 [TRANSFORM] Nettoyage et restructuration...")

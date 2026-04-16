@@ -1,12 +1,12 @@
 import psycopg2
 from sqlalchemy import create_engine
 import pandas as pd
-from DB_CONFIG import DB_CONFIG
+from backend.scripts.DB_CONFIG import DB_CONFIG
 
 # Création du moteur SQLAlchemy (nécessaire pour pandas .to_sql())
 engine = create_engine(
     f"postgresql+psycopg2://{DB_CONFIG['user']}:{DB_CONFIG['password']}"
-    f"@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['database']}"
+    f"@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['dbname']}"
 )
 
 # --- Activites ---
@@ -29,3 +29,4 @@ df_worldbank.to_sql("Indicateurs_WorldBank", engine, if_exists="append", index=F
 
 # Fermeture du moteur
 engine.dispose()
+
