@@ -14,7 +14,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
+    - run: git status
+    - run: git branch
+    - run: git log -1
+    - run: git diff
+    - run: black --version
+    - run: black --verbose --check .
     - uses: actions/checkout@v4
 
     - uses: actions/setup-python@v5
