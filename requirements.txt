@@ -18,3 +18,4 @@ folium>=0.15.0
 streamlit-folium>=0.18.0
 sqlalchemy
 requests
+pytest

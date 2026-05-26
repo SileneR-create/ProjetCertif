@@ -8,6 +8,7 @@ from streamlit_folium import st_folium
 import sys
 import os
 
+
 ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
 if ROOT_DIR not in sys.path:
     sys.path.append(ROOT_DIR)
@@ -17,7 +18,7 @@ from auth import show_user_widget, is_logged_in, get_current_user
 from backend.database import (init_db, add_favorite, remove_favorite, get_favorites,
     is_favorite, save_search, get_search_history, update_user_interests, get_user_interests, register_user, login_user
 )
-from pages.admin import show_admin_page, is_admin
+from admin import show_admin_page, is_admin
 from backend.utils import get_cached_images, display_image_carousel
 
 # ─────────────────────────────────────────────
@@ -85,12 +86,25 @@ html, body, [class*="css"] { font-family: 'Outfit', sans-serif; }
 # ─────────────────────────────────────────────
 #  DONNÉES
 # ─────────────────────────────────────────────
-DATA_PATH = r"DATA\processed\data_clean.csv"
+DATA_PATH = r"..\DATA\processed\data_clean.csv"
 
 @st.cache_data
 def load_data(path: str) -> pd.DataFrame:
     df = pd.read_csv(path)
     df = engineer_features(df)
+
+    col = "Revenu moyen par habitant ($/jour)"
+    q1 = df[col].quantile(0.25)
+    q2 = df[col].quantile(0.50)
+    q3 = df[col].quantile(0.75)
+    
+    st.session_state["budget_quartiles"] = {
+        "🎒 Petit budget":  (0,  q1),
+        "✈️ Moyen":         (q1, q2),
+        "🏨 Confortable":   (q2, q3),
+        "💎 Luxe":          (q3, float("inf")),
+        "quartiles": (round(q1,1), round(q2,1), round(q3,1))
+    }
     return df
 
 
@@ -260,11 +274,7 @@ def build_sidebar():
     }
 
     user = get_current_user()
-    if is_admin(user):
-        st.sidebar.markdown("---")
-        if st.sidebar.button("🛠️ Panel Admin", use_container_width=True):
-            st.session_state["page"] = "admin"
-            st.rerun()
+
 
 
     return month, prefs, top_n, cluster_bonus

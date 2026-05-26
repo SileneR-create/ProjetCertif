@@ -13,7 +13,6 @@
 
 </p>
 
-
 <details>
   <summary><strong><h1> Avancé du projet</h1></strong></summary>
 
