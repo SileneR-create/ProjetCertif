@@ -1,6 +1,7 @@
 """
 auth.py — Composants UI pour l'authentification dans Streamlit
 """
+
 import streamlit as st
 from backend.database import init_db, register_user, login_user
 
@@ -11,6 +12,7 @@ init_db()
 # ─────────────────────────────────────────────
 #  GESTION SESSION
 # ─────────────────────────────────────────────
+
 
 def is_logged_in() -> bool:
     return st.session_state.get("user") is not None
@@ -67,11 +69,13 @@ AUTH_CSS = """
 #  PAGE LOGIN / REGISTER
 # ─────────────────────────────────────────────
 
+
 def show_auth_page():
     """Affiche la page de connexion/inscription."""
     st.markdown(AUTH_CSS, unsafe_allow_html=True)
 
-    st.markdown("""
+    st.markdown(
+        """
     <div style="text-align:center; margin-bottom: 2rem;">
         <div style="font-family:'DM Serif Display',serif; font-size:2.8rem; color:#1a1a2e;">
             ✈️ TravelMatch
@@ -80,7 +84,9 @@ def show_auth_page():
             Connectez-vous pour sauvegarder vos destinations favorites
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
 
     tab_login, tab_register = st.tabs(["🔑 Connexion", "📝 Inscription"])
 
@@ -90,7 +96,9 @@ def show_auth_page():
             st.markdown("#### Bon retour ! 👋")
             username = st.text_input("Nom d'utilisateur")
             password = st.text_input("Mot de passe", type="password")
-            submitted = st.form_submit_button("Se connecter", use_container_width=True, type="primary")
+            submitted = st.form_submit_button(
+                "Se connecter", use_container_width=True, type="primary"
+            )
 
             if submitted:
                 if not username or not password:
@@ -109,10 +117,12 @@ def show_auth_page():
         with st.form("register_form"):
             st.markdown("#### Créer un compte 🚀")
             new_username = st.text_input("Nom d'utilisateur")
-            new_email    = st.text_input("Email")
+            new_email = st.text_input("Email")
             new_password = st.text_input("Mot de passe", type="password")
             new_password2 = st.text_input("Confirmer le mot de passe", type="password")
-            submitted = st.form_submit_button("Créer mon compte", use_container_width=True, type="primary")
+            submitted = st.form_submit_button(
+                "Créer mon compte", use_container_width=True, type="primary"
+            )
 
             if submitted:
                 if not all([new_username, new_email, new_password, new_password2]):
@@ -137,15 +147,17 @@ def show_auth_page():
 #  WIDGET UTILISATEUR (sidebar)
 # ─────────────────────────────────────────────
 
+
 def show_user_widget():
     """Affiche le widget utilisateur connecté dans la sidebar."""
     user = get_current_user()
-    
+
     if not user:
         return
 
     st.sidebar.markdown("---")
-    st.sidebar.markdown(f"""
+    st.sidebar.markdown(
+        f"""
     <div style="background: linear-gradient(135deg, #eef2ff, #f8faff);
                 border-radius: 12px; padding: 0.8rem 1rem;
                 border: 1px solid #e2e8f0;">
@@ -156,7 +168,9 @@ def show_user_widget():
             {user['email']}
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
 
     if user.get("is_admin"):
         if st.sidebar.button("🛠️ Administration", use_container_width=True):

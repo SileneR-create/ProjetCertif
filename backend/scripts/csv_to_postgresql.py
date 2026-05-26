@@ -11,8 +11,20 @@ engine = create_engine(
 
 # --- Activites ---
 df_act = pd.read_csv(r"..\DATA\processed\activites.csv")
-df_filtred = df_act[['culture', 'adventure', 'nature', 'beaches', 'nightlife', 'cuisine', 'wellness', 'urban', 'seclusion']]
-df_activ = pd.DataFrame(df_filtred.columns, columns=['nom_activite'])
+df_filtred = df_act[
+    [
+        "culture",
+        "adventure",
+        "nature",
+        "beaches",
+        "nightlife",
+        "cuisine",
+        "wellness",
+        "urban",
+        "seclusion",
+    ]
+]
+df_activ = pd.DataFrame(df_filtred.columns, columns=["nom_activite"])
 df_activ.to_sql("Activites", engine, if_exists="append", index=False)
 
 # --- Destinations ---
@@ -29,4 +41,3 @@ df_worldbank.to_sql("Indicateurs_WorldBank", engine, if_exists="append", index=F
 
 # Fermeture du moteur
 engine.dispose()
-

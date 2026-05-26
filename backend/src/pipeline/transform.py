@@ -1,6 +1,7 @@
 import pandas as pd
 from backend.src.config import INDICATEURS
 
+
 def transform(df):
     print("🔧 [TRANSFORM] Nettoyage et restructuration...")
 
@@ -11,10 +12,10 @@ def transform(df):
     # Étape 2 : garder la valeur la plus récente par pays + indicateur
     df = (
         df.dropna(subset=["valeur"])
-          .sort_values("annee", ascending=False)
-          .groupby(["pays", "indicateur"])
-          .first()
-          .reset_index()
+        .sort_values("annee", ascending=False)
+        .groupby(["pays", "indicateur"])
+        .first()
+        .reset_index()
     )
 
     # Étape 3 : pivoter les indicateurs en colonnes

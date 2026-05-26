@@ -4,5 +4,5 @@ DB_CONFIG = {
     "port": 5432,
     "dbname": "BDD_Projet_Certif",
     "user": "ton_utilisateur",
-    "password": "ton_mot_de_passe"
+    "password": "ton_mot_de_passe",
 }

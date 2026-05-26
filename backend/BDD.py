@@ -2,8 +2,9 @@ import sqlite3
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent
-DB_PATH  = BASE_DIR / "database\BDD_Projet_Certif.db"
-SCHEMA   = BASE_DIR / "schema.sql"
+DB_PATH = BASE_DIR / "database\BDD_Projet_Certif.db"
+SCHEMA = BASE_DIR / "schema.sql"
+
 
 def connexion() -> sqlite3.Connection:
     conn = sqlite3.connect(DB_PATH)
@@ -11,6 +12,7 @@ def connexion() -> sqlite3.Connection:
     conn.execute("PRAGMA journal_mode = WAL")
     conn.row_factory = sqlite3.Row  # accès aux colonnes par nom : row["email"]
     return conn
+
 
 def init_db() -> None:
     try:
@@ -20,6 +22,7 @@ def init_db() -> None:
         print("BDD initialisée avec succès.")
     except Exception as e:
         print(f"Erreur initialisation BDD : {e}")
+
 
 if __name__ == "__main__":
     init_db()

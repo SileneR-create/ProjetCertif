@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 PEXELS_API_KEY = os.getenv("PEXELS_API_KEY")
 
+
 @st.cache_data(ttl=86400)
 def get_cached_images(city_name, country_name):
     """Récupère les URLs des images depuis Pexels avec mise en cache."""
@@ -21,9 +22,10 @@ def get_cached_images(city_name, country_name):
         response = requests.get(url, headers=headers)
         response.raise_for_status()
         data = response.json()
-        return [img['src']['large'] for img in data.get('photos', [])]
+        return [img["src"]["large"] for img in data.get("photos", [])]
     except Exception:
         return []
+
 
 def display_image_carousel(images):
     """Affiche un carrousel horizontal simple en HTML/CSS."""
@@ -38,5 +40,3 @@ def display_image_carousel(images):
     </div>
     """
     st.markdown(html_code, unsafe_allow_html=True)
-
-

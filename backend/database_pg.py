@@ -2,8 +2,16 @@ import json
 import hashlib
 import secrets
 from datetime import datetime
-from sqlalchemy import (create_engine, Column, Integer, String, Float,
-    Text, ForeignKey, UniqueConstraint)
+from sqlalchemy import (
+    create_engine,
+    Column,
+    Integer,
+    String,
+    Float,
+    Text,
+    ForeignKey,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 
 from scripts.DB_CONFIG import DB_CONFIG
@@ -33,6 +41,7 @@ Base = declarative_base()
 
 # ─── MODELS ─────────────────────────────────────────────
 
+
 class User(Base):
     __tablename__ = "users"
 
@@ -58,9 +67,7 @@ class Favorite(Base):
     cluster_label = Column(String)
     saved_at = Column(String, nullable=False)
 
-    __table_args__ = (
-        UniqueConstraint("user_id", "city", "month"),
-    )
+    __table_args__ = (UniqueConstraint("user_id", "city", "month"),)
 
 
 class SearchHistory(Base):
@@ -84,9 +91,7 @@ class Profile(Base):
     created_at = Column(String, nullable=False)
     updated_at = Column(String, nullable=False)
 
-    __table_args__ = (
-        UniqueConstraint("user_id", "name"),
-    )
+    __table_args__ = (UniqueConstraint("user_id", "name"),)
 
 
 class UserInterests(Base):
@@ -99,11 +104,13 @@ class UserInterests(Base):
 
 # ─── INIT DB ────────────────────────────────────────────
 
+
 def init_db():
     Base.metadata.create_all(bind=engine)
 
 
 # ─── HELPERS ────────────────────────────────────────────
+
 
 def get_session():
     return SessionLocal()
@@ -127,13 +134,16 @@ def login_user(username, password):
         if _hash_password(password, user.salt) != user.password:
             return {"success": False, "error": "Mot de passe incorrect."}
 
-        return {"success": True, "user": {
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-            "created_at": user.created_at,
-            "is_admin": user.is_admin
-        }}
+        return {
+            "success": True,
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "created_at": user.created_at,
+                "is_admin": user.is_admin,
+            },
+        }
 
     finally:
         session.close()
@@ -141,14 +151,14 @@ def login_user(username, password):
 
 # ─── PROFILES ───────────────────────────────────────────
 
+
 def save_profile(user_id: int, name: str, preferences: dict):
     session = get_session()
     try:
         now = datetime.now().isoformat()
-        profile = session.query(Profile).filter_by(
-            user_id=user_id,
-            name=name.strip()
-        ).first()
+        profile = (
+            session.query(Profile).filter_by(user_id=user_id, name=name.strip()).first()
+        )
 
         if profile:
             profile.preferences = json.dumps(preferences)
@@ -159,7 +169,7 @@ def save_profile(user_id: int, name: str, preferences: dict):
                 name=name.strip(),
                 preferences=json.dumps(preferences),
                 created_at=now,
-                updated_at=now
+                updated_at=now,
             )
             session.add(profile)
 
@@ -177,7 +187,12 @@ def save_profile(user_id: int, name: str, preferences: dict):
 def get_profiles(user_id: int):
     session = get_session()
     try:
-        profiles = session.query(Profile).filter_by(user_id=user_id).order_by(Profile.updated_at.desc()).all()
+        profiles = (
+            session.query(Profile)
+            .filter_by(user_id=user_id)
+            .order_by(Profile.updated_at.desc())
+            .all()
+        )
 
         return [
             {
@@ -186,7 +201,7 @@ def get_profiles(user_id: int):
                 "name": p.name,
                 "preferences": json.loads(p.preferences),
                 "created_at": p.created_at,
-                "updated_at": p.updated_at
+                "updated_at": p.updated_at,
             }
             for p in profiles
         ]
@@ -207,12 +222,15 @@ def delete_profile(profile_id: int, user_id: int):
 
 # ─── FAVORITES ──────────────────────────────────────────
 
+
 def add_favorite(user_id, city, country, month, score_pct, temp_avg, cluster_label):
     session = get_session()
     try:
-        fav = session.query(Favorite).filter_by(
-            user_id=user_id, city=city, month=month
-        ).first()
+        fav = (
+            session.query(Favorite)
+            .filter_by(user_id=user_id, city=city, month=month)
+            .first()
+        )
 
         now = datetime.now().isoformat()
 
@@ -231,7 +249,7 @@ def add_favorite(user_id, city, country, month, score_pct, temp_avg, cluster_lab
                 score_pct=score_pct,
                 temp_avg=temp_avg,
                 cluster_label=cluster_label,
-                saved_at=now
+                saved_at=now,
             )
             session.add(fav)
 
@@ -261,7 +279,12 @@ def remove_favorite(user_id, city, month):
 def get_favorites(user_id):
     session = get_session()
     try:
-        favs = session.query(Favorite).filter_by(user_id=user_id).order_by(Favorite.saved_at.desc()).all()
+        favs = (
+            session.query(Favorite)
+            .filter_by(user_id=user_id)
+            .order_by(Favorite.saved_at.desc())
+            .all()
+        )
         return [f.__dict__ for f in favs]
     finally:
         session.close()
@@ -270,25 +293,31 @@ def get_favorites(user_id):
 def is_favorite(user_id, city, month):
     session = get_session()
     try:
-        return session.query(Favorite).filter_by(
-            user_id=user_id, city=city, month=month
-        ).first() is not None
+        return (
+            session.query(Favorite)
+            .filter_by(user_id=user_id, city=city, month=month)
+            .first()
+            is not None
+        )
     finally:
         session.close()
 
 
 # ─── SEARCH HISTORY ─────────────────────────────────────
 
+
 def save_search(user_id, month, preferences, top_result):
     session = get_session()
     try:
-        session.add(SearchHistory(
-            user_id=user_id,
-            month=month,
-            preferences=json.dumps(preferences),
-            top_result=top_result,
-            searched_at=datetime.now().isoformat()
-        ))
+        session.add(
+            SearchHistory(
+                user_id=user_id,
+                month=month,
+                preferences=json.dumps(preferences),
+                top_result=top_result,
+                searched_at=datetime.now().isoformat(),
+            )
+        )
         session.commit()
     finally:
         session.close()
@@ -297,11 +326,13 @@ def save_search(user_id, month, preferences, top_result):
 def get_search_history(user_id, limit=10):
     session = get_session()
     try:
-        rows = session.query(SearchHistory)\
-            .filter_by(user_id=user_id)\
-            .order_by(SearchHistory.searched_at.desc())\
-            .limit(limit)\
+        rows = (
+            session.query(SearchHistory)
+            .filter_by(user_id=user_id)
+            .order_by(SearchHistory.searched_at.desc())
+            .limit(limit)
             .all()
+        )
 
         return [
             {
@@ -309,7 +340,7 @@ def get_search_history(user_id, limit=10):
                 "month": r.month,
                 "preferences": json.loads(r.preferences),
                 "top_result": r.top_result,
-                "searched_at": r.searched_at
+                "searched_at": r.searched_at,
             }
             for r in rows
         ]
@@ -318,6 +349,7 @@ def get_search_history(user_id, limit=10):
 
 
 # ─── INTERESTS ──────────────────────────────────────────
+
 
 def register_user(username, email, password, interests: dict):
     """Version avec intérêts (SQLAlchemy)"""
@@ -331,17 +363,19 @@ def register_user(username, email, password, interests: dict):
             email=email.strip().lower(),
             password=hashed,
             salt=salt,
-            created_at=datetime.now().isoformat()
+            created_at=datetime.now().isoformat(),
         )
 
         session.add(user)
         session.flush()  # pour récupérer user.id
 
-        session.add(UserInterests(
-            user_id=user.id,
-            interests=json.dumps(interests),
-            updated_at=datetime.now().isoformat()
-        ))
+        session.add(
+            UserInterests(
+                user_id=user.id,
+                interests=json.dumps(interests),
+                updated_at=datetime.now().isoformat(),
+            )
+        )
 
         session.commit()
         return {"success": True, "user_id": user.id}
@@ -368,7 +402,7 @@ def get_user_interests(user_id: int):
             "culture": 3,
             "restaurant": 3,
             "nightlife": 3,
-            "loisirs": 3
+            "loisirs": 3,
         }
     finally:
         session.close()
@@ -385,9 +419,7 @@ def update_user_interests(user_id: int, interests: dict):
             row.updated_at = now
         else:
             row = UserInterests(
-                user_id=user_id,
-                interests=json.dumps(interests),
-                updated_at=now
+                user_id=user_id, interests=json.dumps(interests), updated_at=now
             )
             session.add(row)
 
