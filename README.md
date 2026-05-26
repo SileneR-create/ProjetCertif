@@ -307,6 +307,4 @@ TABLE Indicateurs_WorldBank(
 
 
 
-
-
 <mark>En cours</mark>
