@@ -9,5 +9,5 @@ dependencies = [
     "wbgapi>=1.0.14",
 ]
 [tool.black]
-target-version = ["py311"]
+target-version = ["py312"]
 line-length = 120
