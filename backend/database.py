@@ -173,9 +173,7 @@ def save_profile(user_id: int, name: str, preferences: dict) -> dict:
 def get_profiles(user_id: int) -> list:
     conn = get_connection()
     c = conn.cursor()
-    c.execute(
-        "SELECT * FROM profiles WHERE user_id=? ORDER BY updated_at DESC", (user_id,)
-    )
+    c.execute("SELECT * FROM profiles WHERE user_id=? ORDER BY updated_at DESC", (user_id,))
     rows = []
     for r in c.fetchall():
         row = dict(r)
@@ -189,9 +187,7 @@ def delete_profile(profile_id: int, user_id: int) -> dict:
     conn = get_connection()
     c = conn.cursor()
     try:
-        c.execute(
-            "DELETE FROM profiles WHERE id=? AND user_id=?", (profile_id, user_id)
-        )
+        c.execute("DELETE FROM profiles WHERE id=? AND user_id=?", (profile_id, user_id))
         conn.commit()
         return {"success": True}
     finally:
@@ -245,9 +241,7 @@ def remove_favorite(user_id, city, month):
 def get_favorites(user_id):
     conn = get_connection()
     c = conn.cursor()
-    c.execute(
-        "SELECT * FROM favorites WHERE user_id=? ORDER BY saved_at DESC", (user_id,)
-    )
+    c.execute("SELECT * FROM favorites WHERE user_id=? ORDER BY saved_at DESC", (user_id,))
     rows = [dict(r) for r in c.fetchall()]
     conn.close()
     return rows

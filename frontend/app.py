@@ -161,9 +161,7 @@ def show_auth_page():
             st.markdown("#### Bon retour 👋")
             username = st.text_input("Nom d'utilisateur")
             password = st.text_input("Mot de passe", type="password")
-            if st.form_submit_button(
-                "Se connecter", use_container_width=True, type="primary"
-            ):
+            if st.form_submit_button("Se connecter", use_container_width=True, type="primary"):
                 if not username or not password:
                     st.error("Remplissez tous les champs.")
                 else:
@@ -184,15 +182,11 @@ def show_auth_page():
                 new_password = st.text_input("Mot de passe", type="password")
             with c2:
                 new_email = st.text_input("Email")
-                new_password2 = st.text_input(
-                    "Confirmer le mot de passe", type="password"
-                )
+                new_password2 = st.text_input("Confirmer le mot de passe", type="password")
 
             st.markdown("---")
             st.markdown("#### 🎯 Vos centres d'intérêt")
-            st.caption(
-                "Ces préférences guident nos recommandations. Vous pourrez les modifier dans votre profil."
-            )
+            st.caption("Ces préférences guident nos recommandations. Vous pourrez les modifier dans votre profil.")
 
             cols = st.columns(3)
             interests = {}
@@ -206,18 +200,14 @@ def show_auth_page():
             ]
             for i, (key, label) in enumerate(fields):
                 with cols[i % 3]:
-                    interests[key] = st.slider(
-                        label, 1, 5, 3, format="%d ⭐", key=f"reg_{key}"
-                    )
+                    interests[key] = st.slider(label, 1, 5, 3, format="%d ⭐", key=f"reg_{key}")
                     stars = "★" * interests[key] + "☆" * (5 - interests[key])
                     st.markdown(
                         f'<div style="color:#f59e0b;font-size:1.1rem">{stars}</div>',
                         unsafe_allow_html=True,
                     )
 
-            if st.form_submit_button(
-                "Créer mon compte ✈️", use_container_width=True, type="primary"
-            ):
+            if st.form_submit_button("Créer mon compte ✈️", use_container_width=True, type="primary"):
                 if not all([new_username, new_email, new_password, new_password2]):
                     st.error("Remplissez tous les champs.")
                 elif new_password != new_password2:
@@ -225,9 +215,7 @@ def show_auth_page():
                 elif len(new_password) < 6:
                     st.error("Mot de passe trop court (min. 6 caractères).")
                 else:
-                    result = register_user(
-                        new_username, new_email, new_password, interests
-                    )
+                    result = register_user(new_username, new_email, new_password, interests)
                     if result["success"]:
                         login_result = login_user(new_username, new_password)
                         st.session_state["user"] = login_result["user"]
@@ -246,9 +234,7 @@ def build_sidebar():
     st.sidebar.markdown("---")
 
     # ── MOIS ────────────────────────────────────────────────────
-    st.sidebar.markdown(
-        '<div class="sidebar-section">🗓️ Période</div>', unsafe_allow_html=True
-    )
+    st.sidebar.markdown('<div class="sidebar-section">🗓️ Période</div>', unsafe_allow_html=True)
     month_name = st.sidebar.selectbox(
         "Mois du séjour",
         list(MONTH_NAMES.values()),
@@ -258,12 +244,8 @@ def build_sidebar():
     month = [k for k, v in MONTH_NAMES.items() if v == month_name][0]
 
     # ── TEMPÉRATURE ─────────────────────────────────────────────
-    st.sidebar.markdown(
-        '<div class="sidebar-section">🌡️ Climat</div>', unsafe_allow_html=True
-    )
-    temp_avg = st.sidebar.slider(
-        "Température souhaitée (°C)", -10, 40, key="temp_slider"
-    )
+    st.sidebar.markdown('<div class="sidebar-section">🌡️ Climat</div>', unsafe_allow_html=True)
+    temp_avg = st.sidebar.slider("Température souhaitée (°C)", -10, 40, key="temp_slider")
     st.sidebar.caption(f"Je veux environ {temp_avg}°C")
 
     # ── TYPE DE DESTINATION ──────────────────────────────────────
@@ -280,9 +262,7 @@ def build_sidebar():
         "🏙️ Métropole Moderne": 4,
         "🎉 Fête & Nightlife": 5,
     }
-    cluster_choice = st.sidebar.selectbox(
-        "Je cherche...", list(cluster_options.keys()), key="cluster_select"
-    )
+    cluster_choice = st.sidebar.selectbox("Je cherche...", list(cluster_options.keys()), key="cluster_select")
     cluster_bonus = cluster_options[cluster_choice]
 
     # ── CONFORT & SÉCURITÉ ───────────────────────────────────────
@@ -290,17 +270,11 @@ def build_sidebar():
         '<div class="sidebar-section">🛡️ Confort & Sécurité</div>',
         unsafe_allow_html=True,
     )
-    indice_confort = st.sidebar.slider(
-        "Confort sanitaire", 0, 100, 70, key="slider_confort"
-    )
-    indice_securite = st.sidebar.slider(
-        "Niveau de sécurité", 0, 100, 60, key="slider_securite"
-    )
+    indice_confort = st.sidebar.slider("Confort sanitaire", 0, 100, 70, key="slider_confort")
+    indice_securite = st.sidebar.slider("Niveau de sécurité", 0, 100, 60, key="slider_securite")
 
     # ── BUDGET ───────────────────────────────────────────────────
-    st.sidebar.markdown(
-        '<div class="sidebar-section">💰 Budget</div>', unsafe_allow_html=True
-    )
+    st.sidebar.markdown('<div class="sidebar-section">💰 Budget</div>', unsafe_allow_html=True)
     budget_label = st.sidebar.radio(
         "Niveau de vie du pays",
         list(BUDGET_MAP.keys()),
@@ -312,9 +286,7 @@ def build_sidebar():
 
     # ── NOMBRE DE RÉSULTATS ─────────────────────────────────────
     st.sidebar.markdown("---")
-    top_n = st.sidebar.number_input(
-        "Nombre de destinations", min_value=3, max_value=20, value=10
-    )
+    top_n = st.sidebar.number_input("Nombre de destinations", min_value=3, max_value=20, value=10)
 
     prefs = {
         "temp_avg": temp_avg,
@@ -435,9 +407,7 @@ def build_map(results: pd.DataFrame):
 #  ONGLET MON PROFIL
 # ─────────────────────────────────────────────
 def show_profile_tab(user: dict):
-    tab_interests, tab_favs, tab_history = st.tabs(
-        ["⭐ Mes centres d'intérêt", "❤️ Mes favoris", "🕐 Historique"]
-    )
+    tab_interests, tab_favs, tab_history = st.tabs(["⭐ Mes centres d'intérêt", "❤️ Mes favoris", "🕐 Historique"])
 
     # ── CENTRES D'INTÉRÊT ────────────────────────────────────────
     with tab_interests:
@@ -485,9 +455,7 @@ def show_profile_tab(user: dict):
     with tab_favs:
         favs = get_favorites(user["id"])
         if not favs:
-            st.info(
-                "Aucune destination favorite. Lancez une recherche et cliquez sur 🤍 !"
-            )
+            st.info("Aucune destination favorite. Lancez une recherche et cliquez sur 🤍 !")
         else:
             st.markdown(f"**{len(favs)} destination(s) sauvegardée(s)**")
             for fav in favs:
@@ -688,11 +656,7 @@ def main():
                         fav_label,
                         key=f"fav_{row['rang']}_{city_name}",
                         use_container_width=True,
-                        help=(
-                            "Retirer des favoris"
-                            if already_fav
-                            else "Ajouter aux favoris"
-                        ),
+                        help=("Retirer des favoris" if already_fav else "Ajouter aux favoris"),
                     ):
                         if already_fav:
                             remove_favorite(user["id"], city_name, month)
@@ -711,9 +675,7 @@ def main():
                         st.rerun()
 
                 fig_radar = radar_chart(row, user_interests, city_name)
-                st.plotly_chart(
-                    fig_radar, use_container_width=True, key=f"radar_{row['rang']}"
-                )
+                st.plotly_chart(fig_radar, use_container_width=True, key=f"radar_{row['rang']}")
 
                 city_pics = get_cached_images(city_name, country)
                 display_image_carousel(city_pics)

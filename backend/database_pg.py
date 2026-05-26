@@ -156,9 +156,7 @@ def save_profile(user_id: int, name: str, preferences: dict):
     session = get_session()
     try:
         now = datetime.now().isoformat()
-        profile = (
-            session.query(Profile).filter_by(user_id=user_id, name=name.strip()).first()
-        )
+        profile = session.query(Profile).filter_by(user_id=user_id, name=name.strip()).first()
 
         if profile:
             profile.preferences = json.dumps(preferences)
@@ -187,12 +185,7 @@ def save_profile(user_id: int, name: str, preferences: dict):
 def get_profiles(user_id: int):
     session = get_session()
     try:
-        profiles = (
-            session.query(Profile)
-            .filter_by(user_id=user_id)
-            .order_by(Profile.updated_at.desc())
-            .all()
-        )
+        profiles = session.query(Profile).filter_by(user_id=user_id).order_by(Profile.updated_at.desc()).all()
 
         return [
             {
@@ -226,11 +219,7 @@ def delete_profile(profile_id: int, user_id: int):
 def add_favorite(user_id, city, country, month, score_pct, temp_avg, cluster_label):
     session = get_session()
     try:
-        fav = (
-            session.query(Favorite)
-            .filter_by(user_id=user_id, city=city, month=month)
-            .first()
-        )
+        fav = session.query(Favorite).filter_by(user_id=user_id, city=city, month=month).first()
 
         now = datetime.now().isoformat()
 
@@ -267,9 +256,7 @@ def add_favorite(user_id, city, country, month, score_pct, temp_avg, cluster_lab
 def remove_favorite(user_id, city, month):
     session = get_session()
     try:
-        session.query(Favorite).filter_by(
-            user_id=user_id, city=city, month=month
-        ).delete()
+        session.query(Favorite).filter_by(user_id=user_id, city=city, month=month).delete()
         session.commit()
         return {"success": True}
     finally:
@@ -279,12 +266,7 @@ def remove_favorite(user_id, city, month):
 def get_favorites(user_id):
     session = get_session()
     try:
-        favs = (
-            session.query(Favorite)
-            .filter_by(user_id=user_id)
-            .order_by(Favorite.saved_at.desc())
-            .all()
-        )
+        favs = session.query(Favorite).filter_by(user_id=user_id).order_by(Favorite.saved_at.desc()).all()
         return [f.__dict__ for f in favs]
     finally:
         session.close()
@@ -293,12 +275,7 @@ def get_favorites(user_id):
 def is_favorite(user_id, city, month):
     session = get_session()
     try:
-        return (
-            session.query(Favorite)
-            .filter_by(user_id=user_id, city=city, month=month)
-            .first()
-            is not None
-        )
+        return session.query(Favorite).filter_by(user_id=user_id, city=city, month=month).first() is not None
     finally:
         session.close()
 
@@ -418,9 +395,7 @@ def update_user_interests(user_id: int, interests: dict):
             row.interests = json.dumps(interests)
             row.updated_at = now
         else:
-            row = UserInterests(
-                user_id=user_id, interests=json.dumps(interests), updated_at=now
-            )
+            row = UserInterests(user_id=user_id, interests=json.dumps(interests), updated_at=now)
             session.add(row)
 
         session.commit()

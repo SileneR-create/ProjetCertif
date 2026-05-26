@@ -96,9 +96,7 @@ def show_auth_page():
             st.markdown("#### Bon retour ! 👋")
             username = st.text_input("Nom d'utilisateur")
             password = st.text_input("Mot de passe", type="password")
-            submitted = st.form_submit_button(
-                "Se connecter", use_container_width=True, type="primary"
-            )
+            submitted = st.form_submit_button("Se connecter", use_container_width=True, type="primary")
 
             if submitted:
                 if not username or not password:
@@ -120,9 +118,7 @@ def show_auth_page():
             new_email = st.text_input("Email")
             new_password = st.text_input("Mot de passe", type="password")
             new_password2 = st.text_input("Confirmer le mot de passe", type="password")
-            submitted = st.form_submit_button(
-                "Créer mon compte", use_container_width=True, type="primary"
-            )
+            submitted = st.form_submit_button("Créer mon compte", use_container_width=True, type="primary")
 
             if submitted:
                 if not all([new_username, new_email, new_password, new_password2]):

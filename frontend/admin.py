@@ -111,10 +111,7 @@ def get_search_stats() -> dict:
         11: "Novembre",
         12: "Décembre",
     }
-    top_months = [
-        {"mois": month_names.get(r[0], str(r[0])), "recherches": r[1]}
-        for r in months_raw
-    ]
+    top_months = [{"mois": month_names.get(r[0], str(r[0])), "recherches": r[1]} for r in months_raw]
 
     # Recherches par jour (30 derniers jours)
     since = (datetime.now() - timedelta(days=30)).isoformat()
@@ -165,9 +162,7 @@ def get_favorites_stats() -> dict:
         GROUP BY city ORDER BY nb DESC LIMIT 10
     """
     )
-    top_cities = [
-        {"city": r[0], "country": r[1] or "", "favoris": r[2]} for r in c.fetchall()
-    ]
+    top_cities = [{"city": r[0], "country": r[1] or "", "favoris": r[2]} for r in c.fetchall()]
 
     # Mois les plus mis en favoris
     c.execute(
@@ -190,10 +185,7 @@ def get_favorites_stats() -> dict:
         11: "Novembre",
         12: "Décembre",
     }
-    top_months = [
-        {"mois": month_names.get(r[0], str(r[0])), "favoris": r[1]}
-        for r in c.fetchall()
-    ]
+    top_months = [{"mois": month_names.get(r[0], str(r[0])), "favoris": r[1]} for r in c.fetchall()]
 
     conn.close()
     return {
@@ -244,9 +236,7 @@ def toggle_admin(user_id: int, current_value: int) -> dict:
     conn = get_connection()
     c = conn.cursor()
     try:
-        c.execute(
-            "UPDATE users SET is_admin = ? WHERE id = ?", (1 - current_value, user_id)
-        )
+        c.execute("UPDATE users SET is_admin = ? WHERE id = ?", (1 - current_value, user_id))
         conn.commit()
         return {"success": True}
     except Exception as e:
@@ -414,9 +404,7 @@ def show_admin_page(user: dict):
             st.markdown("#### 🏙️ Villes les plus mises en favoris")
             if f_stats["top_cities"]:
                 df_cities = pd.DataFrame(f_stats["top_cities"])
-                df_cities["label"] = (
-                    df_cities["city"] + " (" + df_cities["country"] + ")"
-                )
+                df_cities["label"] = df_cities["city"] + " (" + df_cities["country"] + ")"
                 fig = px.bar(
                     df_cities,
                     x="favoris",
@@ -469,15 +457,12 @@ def show_admin_page(user: dict):
             return
 
         # Recherche
-        search_query = st.text_input(
-            "🔎 Rechercher un utilisateur", placeholder="Nom ou email..."
-        )
+        search_query = st.text_input("🔎 Rechercher un utilisateur", placeholder="Nom ou email...")
         if search_query:
             users = [
                 u
                 for u in users
-                if search_query.lower() in u["username"].lower()
-                or search_query.lower() in u["email"].lower()
+                if search_query.lower() in u["username"].lower() or search_query.lower() in u["email"].lower()
             ]
 
         st.markdown(f"**{len(users)} utilisateur(s)**")
@@ -502,9 +487,7 @@ def show_admin_page(user: dict):
                 with c4:
                     if not is_current:
                         # Toggle admin
-                        admin_label = (
-                            "⬇️ Retirer admin" if u["is_admin"] else "⬆️ Rendre admin"
-                        )
+                        admin_label = "⬇️ Retirer admin" if u["is_admin"] else "⬆️ Rendre admin"
                         if st.button(
                             admin_label,
                             key=f"admin_{u['id']}",
@@ -525,9 +508,7 @@ def show_admin_page(user: dict):
 
                         # Confirmation suppression
                         if st.session_state.get(f"confirm_del_{u['id']}"):
-                            st.warning(
-                                f"⚠️ Supprimer **{u['username']}** et toutes ses données ?"
-                            )
+                            st.warning(f"⚠️ Supprimer **{u['username']}** et toutes ses données ?")
                             cc1, cc2 = st.columns(2)
                             with cc1:
                                 if st.button(

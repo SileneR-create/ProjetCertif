@@ -43,9 +43,7 @@ TOURISM_FEATURES = [
     "valeur",
 ]
 
-ALL_MODEL_FEATURES = (
-    ACTIVITY_FEATURES + COMFORT_FEATURES + ECONOMIC_FEATURES + TOURISM_FEATURES
-)
+ALL_MODEL_FEATURES = ACTIVITY_FEATURES + COMFORT_FEATURES + ECONOMIC_FEATURES + TOURISM_FEATURES
 
 MONTH_NAMES = {
     1: "Janvier",
@@ -109,14 +107,10 @@ def recommend(df, month, user_prefs, top_n=10, cluster_bonus_id=None):
 
     # SCORING
     # Score Température (Ecart max 15°C)
-    score_temp = 1.0 - (
-        np.abs(df_m["temp_avg"] - user_prefs.get("temp_avg", 25)) / 15
-    ).clip(0, 1)
+    score_temp = 1.0 - (np.abs(df_m["temp_avg"] - user_prefs.get("temp_avg", 25)) / 15).clip(0, 1)
 
     # Score Activités
-    act_diffs = [
-        np.abs(df_m[f] - (user_prefs.get(f, 3) * 20)) / 100 for f in ACTIVITY_FEATURES
-    ]
+    act_diffs = [np.abs(df_m[f] - (user_prefs.get(f, 3) * 20)) / 100 for f in ACTIVITY_FEATURES]
     score_act = 1.0 - (sum(act_diffs) / len(ACTIVITY_FEATURES))
 
     # Score IA (Match avec le cluster prédit par Random Forest)
