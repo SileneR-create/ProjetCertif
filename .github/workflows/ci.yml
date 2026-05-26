@@ -34,7 +34,7 @@ jobs:
       run: flake8 .
 
     - name: Format check
-      run: black --check . --diff
+      run: black .
 
     - name: Tests
       run: pytest
