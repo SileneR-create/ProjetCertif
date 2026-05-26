@@ -92,6 +92,7 @@ def _hash_password(password: str, salt: str) -> str:
     return hashlib.sha256(f"{password}{salt}".encode()).hexdigest()
 
 
+'''
 def register_user(username, email, password):
     conn = get_connection()
     c = conn.cursor()
@@ -112,6 +113,7 @@ def register_user(username, email, password):
         return {"success": False, "error": str(e)}
     finally:
         conn.close()
+        '''
 
 
 def login_user(username, password):

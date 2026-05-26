@@ -17,7 +17,7 @@ def init_db() -> None:
         conn = connexion()
         conn.executescript(SCHEMA.read_text(encoding="utf-8"))
         conn.close()
-        print("BDD initialisée avec succès ma puce.")
+        print("BDD initialisée avec succès.")
     except Exception as e:
         print(f"Erreur initialisation BDD : {e}")
 
