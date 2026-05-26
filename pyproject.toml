@@ -8,3 +8,6 @@ dependencies = [
     "pandas>=3.0.1",
     "wbgapi>=1.0.14",
 ]
+[tool.black]
+target-version = ["py311"]
+line-length = 120

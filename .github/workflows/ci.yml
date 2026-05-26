@@ -32,7 +32,7 @@ jobs:
       run: flake8 .
 
     - name: Format check
-      run: black --check . 
+      run: black --check . --target-version to py311
 
     - name: Run tests
       run: pytest
