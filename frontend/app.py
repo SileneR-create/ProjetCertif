@@ -97,7 +97,7 @@ def load_data(path: str) -> pd.DataFrame:
     q1 = df[col].quantile(0.25)
     q2 = df[col].quantile(0.50)
     q3 = df[col].quantile(0.75)
-    
+
     st.session_state["budget_quartiles"] = {
         "🎒 Petit budget":  (0,  q1),
         "✈️ Moyen":         (q1, q2),
@@ -455,7 +455,7 @@ def main():
             st.session_state["page"] = "app"
             st.rerun()
         show_admin_page(user)
-        return 
+        return
 
 
     user_interests = st.session_state["user_interests"]
@@ -483,7 +483,7 @@ def main():
     except FileNotFoundError:
         st.error(f"⚠️ Dataset introuvable : `{DATA_PATH}`")
         return
-    
+
     # ___MAPPING___
     revenu_col = "Revenu moyen par habitant ($/jour)"
 
@@ -577,7 +577,7 @@ def main():
                 fig_radar = radar_chart(row, user_interests, city_name)
                 st.plotly_chart(fig_radar, use_container_width=True,
                                 key=f"radar_{row['rang']}")
-                                
+
                 city_pics = get_cached_images(city_name, country)
                 display_image_carousel(city_pics)
 
