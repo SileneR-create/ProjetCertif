@@ -3,6 +3,11 @@ auth.py — Composants UI pour l'authentification dans Streamlit
 """
 
 import streamlit as st
+import sys
+import os
+
+sys.path.append(os.path.abspath(".."))
+
 from backend.database import init_db, register_user, login_user
 
 # Initialiser la DB au premier import

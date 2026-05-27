@@ -14,7 +14,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 
-from scripts.DB_CONFIG import DB_CONFIG
+from .scripts.DB_CONFIG import DB_CONFIG
 
 DATABASE_URL = (
     f"postgresql+psycopg2://{DB_CONFIG['user']}:{DB_CONFIG['password']}"

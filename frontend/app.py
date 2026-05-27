@@ -7,32 +7,39 @@ import folium
 from streamlit_folium import st_folium
 import sys
 import os
+import requests  # 👈 Permet de communiquer avec le serveur FastAPI
 
-
+# Configuration du chemin racine (conservée pour charger les outils visuels si nécessaire)
 ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
 if ROOT_DIR not in sys.path:
     sys.path.append(ROOT_DIR)
 
-from recommender import recommend, engineer_features, MONTH_NAMES, ACTIVITY_FEATURES
-from auth import show_user_widget, is_logged_in, get_current_user
-from backend.database import (
-    init_db,
-    add_favorite,
-    remove_favorite,
-    get_favorites,
-    is_favorite,
-    save_search,
-    get_search_history,
-    update_user_interests,
-    get_user_interests,
-    register_user,
-    login_user,
-)
-from admin import show_admin_page, is_admin
+# ON CONSERVE UNIQUEMENT les imports liés à l'affichage visuel ou à l'authentification UI
+from admin import show_admin_page
+from frontend.auth import show_user_widget, is_logged_in, get_current_user
 from backend.utils import get_cached_images, display_image_carousel
 
+# ── CONFIGURATION DE L'URL DE L'API ──
+# En local, utilise le port 8000. La pipeline CI/CD l'écrasera en prod via les variables d'environnement.
+API_URL = os.getenv("API_URL", "http://localhost:8000")
+
+MONTH_NAMES = {
+    1: "Janvier",
+    2: "Février",
+    3: "Mars",
+    4: "Avril",
+    5: "Mai",
+    6: "Juin",
+    7: "Juillet",
+    8: "Août",
+    9: "Septembre",
+    10: "Octobre",
+    11: "Novembre",
+    12: "Décembre",
+}
+
 # ─────────────────────────────────────────────
-#  CONFIG
+#  CONFIG PAGE
 # ─────────────────────────────────────────────
 st.set_page_config(
     page_title="TravelMatch",
@@ -41,15 +48,8 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-BUDGET_MAP = {
-    "🎒 Petit budget": 25,
-    "✈️ Moyen": 55,
-    "🏨 Confortable": 80,
-    "💎 Luxe": 100,
-}
-
 # ─────────────────────────────────────────────
-#  CSS
+#  CSS (Conservé à l'identique)
 # ─────────────────────────────────────────────
 st.markdown(
     """
@@ -97,50 +97,9 @@ html, body, [class*="css"] { font-family: 'Outfit', sans-serif; }
 
 
 # ─────────────────────────────────────────────
-#  DONNÉES
-# ─────────────────────────────────────────────
-DATA_PATH = r"..\DATA\processed\data_clean.csv"
-
-
-@st.cache_data
-def load_data(path: str) -> pd.DataFrame:
-    df = pd.read_csv(path)
-    df = engineer_features(df)
-
-    col = "Revenu moyen par habitant ($/jour)"
-    q1 = df[col].quantile(0.25)
-    q2 = df[col].quantile(0.50)
-    q3 = df[col].quantile(0.75)
-
-    st.session_state["budget_quartiles"] = {
-        "🎒 Petit budget": (0, q1),
-        "✈️ Moyen": (q1, q2),
-        "🏨 Confortable": (q2, q3),
-        "💎 Luxe": (q3, float("inf")),
-        "quartiles": (round(q1, 1), round(q2, 1), round(q3, 1)),
-    }
-    return df
-
-
-# ─────────────────────────────────────────────
-#  COMPOSANT ÉTOILES
-# ─────────────────────────────────────────────
-def star_rating(label: str, key: str, default: int = 3) -> int:
-    """Affiche un sélecteur d'étoiles via un slider discret stylisé."""
-    val = st.slider(label, 1, 5, value=default, key=key, format="%d ⭐")
-    stars = "★" * val + "☆" * (5 - val)
-    st.markdown(
-        f'<div class="star-row" style="color:#f59e0b">{stars}</div>',
-        unsafe_allow_html=True,
-    )
-    return val
-
-
-# ─────────────────────────────────────────────
-#  PAGE INSCRIPTION
+#  PAGE INSCRIPTION & CONNEXION VIA API
 # ─────────────────────────────────────────────
 def show_auth_page():
-
     st.markdown(
         """
     <div style="text-align:center; padding: 2rem 0 1rem;">
@@ -165,12 +124,18 @@ def show_auth_page():
                 if not username or not password:
                     st.error("Remplissez tous les champs.")
                 else:
-                    result = login_user(username, password)
-                    if result["success"]:
-                        st.session_state["user"] = result["user"]
-                        st.rerun()
-                    else:
-                        st.error(result["error"])
+                    try:
+                        # Appel API
+                        response = requests.post(
+                            f"{API_URL}/auth/login", json={"username": username, "password": password}
+                        )
+                        if response.status_code == 200:
+                            st.session_state["user"] = response.json()["user"]
+                            st.rerun()
+                        else:
+                            st.error(response.json().get("detail", "Identifiants incorrects."))
+                    except requests.exceptions.ConnectionError:
+                        st.error("Impossible de joindre le backend FastAPI.")
 
     # ── INSCRIPTION ──
     with tab_register:
@@ -186,7 +151,6 @@ def show_auth_page():
 
             st.markdown("---")
             st.markdown("#### 🎯 Vos centres d'intérêt")
-            st.caption("Ces préférences guident nos recommandations. Vous pourrez les modifier dans votre profil.")
 
             cols = st.columns(3)
             interests = {}
@@ -202,10 +166,7 @@ def show_auth_page():
                 with cols[i % 3]:
                     interests[key] = st.slider(label, 1, 5, 3, format="%d ⭐", key=f"reg_{key}")
                     stars = "★" * interests[key] + "☆" * (5 - interests[key])
-                    st.markdown(
-                        f'<div style="color:#f59e0b;font-size:1.1rem">{stars}</div>',
-                        unsafe_allow_html=True,
-                    )
+                    st.markdown(f'<div style="color:#f59e0b;font-size:1.1rem">{stars}</div>', unsafe_allow_html=True)
 
             if st.form_submit_button("Créer mon compte ✈️", use_container_width=True, type="primary"):
                 if not all([new_username, new_email, new_password, new_password2]):
@@ -215,44 +176,49 @@ def show_auth_page():
                 elif len(new_password) < 6:
                     st.error("Mot de passe trop court (min. 6 caractères).")
                 else:
-                    result = register_user(new_username, new_email, new_password, interests)
-                    if result["success"]:
-                        login_result = login_user(new_username, new_password)
-                        st.session_state["user"] = login_result["user"]
-                        st.success("Compte créé ! Bienvenue 🎉")
-                        st.rerun()
-                    else:
-                        st.error(result["error"])
+                    try:
+                        payload = {
+                            "username": new_username,
+                            "email": new_email,
+                            "password": new_password,
+                            "interests": interests,
+                        }
+                        response = requests.post(f"{API_URL}/auth/register", json=payload)
+                        if response.status_code == 200:
+                            # Connexion automatique immédiate après inscription
+                            login_res = requests.post(
+                                f"{API_URL}/auth/login", json={"username": new_username, "password": new_password}
+                            )
+                            st.session_state["user"] = login_res.json()["user"]
+                            st.success("Compte créé ! Bienvenue 🎉")
+                            st.rerun()
+                        else:
+                            st.error(response.json().get("detail", "Erreur d'inscription"))
+                    except requests.exceptions.ConnectionError:
+                        st.error("Serveur indisponible.")
 
 
 # ─────────────────────────────────────────────
-#  SIDEBAR
+#  SIDEBAR VIA API
 # ─────────────────────────────────────────────
 def build_sidebar():
     st.sidebar.markdown("## ✈️ TravelMatch")
     st.sidebar.markdown("*Affinez votre recherche*")
     st.sidebar.markdown("---")
 
-    # ── MOIS ────────────────────────────────────────────────────
+    # ── MOIS ──
     st.sidebar.markdown('<div class="sidebar-section">🗓️ Période</div>', unsafe_allow_html=True)
     month_name = st.sidebar.selectbox(
-        "Mois du séjour",
-        list(MONTH_NAMES.values()),
-        index=st.session_state.get("month_index", 6),
-        key="month_select",
+        "Mois du séjour", list(MONTH_NAMES.values()), index=st.session_state.get("month_index", 6), key="month_select"
     )
     month = [k for k, v in MONTH_NAMES.items() if v == month_name][0]
 
-    # ── TEMPÉRATURE ─────────────────────────────────────────────
+    # ── CLIMAT ──
     st.sidebar.markdown('<div class="sidebar-section">🌡️ Climat</div>', unsafe_allow_html=True)
     temp_avg = st.sidebar.slider("Température souhaitée (°C)", -10, 40, key="temp_slider")
-    st.sidebar.caption(f"Je veux environ {temp_avg}°C")
 
-    # ── TYPE DE DESTINATION ──────────────────────────────────────
-    st.sidebar.markdown(
-        '<div class="sidebar-section">🗺️ Type de destination</div>',
-        unsafe_allow_html=True,
-    )
+    # ── TYPE ──
+    st.sidebar.markdown('<div class="sidebar-section">🗺️ Type de destination</div>', unsafe_allow_html=True)
     cluster_options = {
         "Pas de préférence": None,
         "🌿 Nature & Aventure": 0,
@@ -265,55 +231,65 @@ def build_sidebar():
     cluster_choice = st.sidebar.selectbox("Je cherche...", list(cluster_options.keys()), key="cluster_select")
     cluster_bonus = cluster_options[cluster_choice]
 
-    # ── CONFORT & SÉCURITÉ ───────────────────────────────────────
-    st.sidebar.markdown(
-        '<div class="sidebar-section">🛡️ Confort & Sécurité</div>',
-        unsafe_allow_html=True,
-    )
-    indice_confort = st.sidebar.slider("Confort sanitaire", 0, 100, 70, key="slider_confort")
-    indice_securite = st.sidebar.slider("Niveau de sécurité", 0, 100, 60, key="slider_securite")
+    # ── ACCESSIBILITÉ ──
+    st.sidebar.markdown('<div class="sidebar-section">🏗️ Accéssibilité</div>', unsafe_allow_html=True)
+    indice_electricite = st.sidebar.slider("Électricité accessible (% pop)", 0, 100, 80, key="slider_electricite")
+    indice_internet = st.sidebar.slider("Internet accessible (% pop)", 0, 100, 70, key="slider_internet")
+    indice_eau = st.sidebar.slider("Eau potable accessible (% pop)", 0, 100, 85, key="slider_eau")
+    indice_medecins = st.sidebar.slider("Médecins (pour 1000 habitants)", 0.0, 5.0, 2.0, key="slider_medecins")
 
-    # ── BUDGET ───────────────────────────────────────────────────
-    st.sidebar.markdown('<div class="sidebar-section">💰 Budget</div>', unsafe_allow_html=True)
-    budget_label = st.sidebar.radio(
-        "Niveau de vie du pays",
-        list(BUDGET_MAP.keys()),
-        index=1,
-        key="budget_radio",
-        help="Correspond au niveau de développement économique de la destination",
-    )
-    budget_val = BUDGET_MAP[budget_label]
+    # ── BUDGET (Récupéré depuis FastAPI) ──
+    st.sidebar.markdown('<div class="sidebar-section">💰 Budget sur place</div>', unsafe_allow_html=True)
+    try:
+        budget_info = requests.get(f"{API_URL}/budget/info").json()
+    except Exception:
+        budget_info = {}
 
-    # ── NOMBRE DE RÉSULTATS ─────────────────────────────────────
+    budget_options = {}
+    for category_name, details in budget_info.items():
+        budget_options[f"{category_name} (~${details['revenu_median']:.0f}/jour, {details['num_cities']} villes)"] = (
+            category_name
+        )
+
+    if not budget_options:
+        budget_options = {
+            "🎒 Budget serré": "🎒 Budget serré",
+            "✈️ Moyen": "✈️ Moyen",
+            "🏨 Confortable": "🏨 Confortable",
+            "💎 Luxe": "💎 Luxe",
+        }
+
+    budget_label_with_info = st.sidebar.radio(
+        "Niveau de vie du pays", list(budget_options.keys()), index=1, key="budget_radio"
+    )
+    budget_label = budget_options[budget_label_with_info]
+
+    try:
+        budget_val = requests.get(f"{API_URL}/budget/map-value", params={"label": budget_label}).json()
+    except Exception:
+        budget_val = 1
+
     st.sidebar.markdown("---")
     top_n = st.sidebar.number_input("Nombre de destinations", min_value=3, max_value=20, value=10)
 
     prefs = {
         "temp_avg": temp_avg,
-        "indice_confort": indice_confort,
-        "indice_securite": indice_securite,
+        "indice_electricite": indice_electricite,
+        "indice_internet": indice_internet,
+        "indice_eau": indice_eau,
+        "indice_medecins": indice_medecins,
         "budget_pct": budget_val,
+        "budget_label": budget_label,
     }
-
-    user = get_current_user()
-
     return month, prefs, top_n, cluster_bonus
 
 
 # ─────────────────────────────────────────────
-#  RADAR CHART
+#  VISUELS GRAPHES & MAP (Conservé complet)
 # ─────────────────────────────────────────────
 def radar_chart(city_row: pd.Series, user_interests: dict, city_name: str):
-    categories = [
-        "Nature",
-        "Patrimoine",
-        "Culture",
-        "Restaurant",
-        "Nightlife",
-        "Loisirs",
-    ]
+    categories = ["Nature", "Patrimoine", "Culture", "Restaurant", "Nightlife", "Loisirs"]
     keys = ["nature", "patrimoine", "culture", "restaurant", "nightlife", "loisirs"]
-
     city_vals = [float(city_row.get(k, 0)) for k in keys]
     user_vals = [float(user_interests.get(k, 0)) for k in keys]
 
@@ -339,14 +315,7 @@ def radar_chart(city_row: pd.Series, user_interests: dict, city_name: str):
         )
     )
     fig.update_layout(
-        polar=dict(
-            radialaxis=dict(
-                visible=True,
-                range=[0, 5],
-                tickvals=[1, 2, 3, 4, 5],
-                tickfont=dict(size=9),
-            )
-        ),
+        polar=dict(radialaxis=dict(visible=True, range=[0, 5], tickvals=[1, 2, 3, 4, 5], tickfont=dict(size=9))),
         showlegend=True,
         legend=dict(orientation="h", y=-0.15),
         height=300,
@@ -357,16 +326,11 @@ def radar_chart(city_row: pd.Series, user_interests: dict, city_name: str):
     return fig
 
 
-# ─────────────────────────────────────────────
-#  CARTE
-# ─────────────────────────────────────────────
-def build_map(results: pd.DataFrame):
+def build_map(results: pd.DataFrame, city_col: str):
     if "latitude" not in results.columns or "longitude" not in results.columns:
         return None
     m = folium.Map(
-        location=[results["latitude"].mean(), results["longitude"].mean()],
-        zoom_start=2,
-        tiles="CartoDB positron",
+        location=[results["latitude"].mean(), results["longitude"].mean()], zoom_start=2, tiles="CartoDB positron"
     )
     colors = [
         "#0ea5e9",
@@ -382,7 +346,7 @@ def build_map(results: pd.DataFrame):
     ]
     for i, row in results.iterrows():
         if pd.notna(row.get("latitude")) and pd.notna(row.get("longitude")):
-            city = row.get("city", f"Ville {i+1}")
+            city = row.get(city_col, f"Ville {i+1}")
             score = row.get("score_pct", 0)
             color = colors[int(row.get("rang", 1) - 1) % len(colors)]
             folium.CircleMarker(
@@ -393,9 +357,7 @@ def build_map(results: pd.DataFrame):
                 fill_color=color,
                 fill_opacity=0.75,
                 popup=folium.Popup(
-                    f"<b>#{row['rang']} {city}</b><br>{row.get('cluster_label','')}<br>"
-                    f"<b style='color:{color}'>{score:.0f}%</b> match<br>"
-                    f"🌡️ {row.get('temp_avg',0):.1f}°C",
+                    f"<b>#{row['rang']} {city}</b><br>{row.get('cluster_label','')}<br><b style='color:{color}'>{score:.0f}%</b> match<br>🌡️ {row.get('temp_avg',0):.1f}°C",
                     max_width=180,
                 ),
                 tooltip=f"#{row['rang']} {city} — {score:.0f}%",
@@ -404,17 +366,18 @@ def build_map(results: pd.DataFrame):
 
 
 # ─────────────────────────────────────────────
-#  ONGLET MON PROFIL
+#  ONGLET PROFIL COMPLET VIA API
 # ─────────────────────────────────────────────
 def show_profile_tab(user: dict):
     tab_interests, tab_favs, tab_history = st.tabs(["⭐ Mes centres d'intérêt", "❤️ Mes favoris", "🕐 Historique"])
 
-    # ── CENTRES D'INTÉRÊT ────────────────────────────────────────
+    # ── INTÉRÊTS ──
     with tab_interests:
         st.markdown("#### Modifiez vos centres d'intérêt")
-        st.caption("Ces préférences sont utilisées dans toutes vos recherches.")
-
-        current = get_user_interests(user["id"])
+        try:
+            current = requests.get(f"{API_URL}/users/{user['id']}/interests").json()
+        except Exception:
+            current = {}
 
         fields = [
             ("nature", "🌿 Nature & Randonnée"),
@@ -424,36 +387,28 @@ def show_profile_tab(user: dict):
             ("nightlife", "🎉 Vie nocturne"),
             ("loisirs", "🎢 Loisirs"),
         ]
-
         cols = st.columns(3)
         new_interests = {}
         for i, (key, label) in enumerate(fields):
             with cols[i % 3]:
-                val = st.slider(
-                    label,
-                    1,
-                    5,
-                    value=int(current.get(key, 3)),
-                    format="%d ⭐",
-                    key=f"profile_{key}",
-                )
+                val = st.slider(label, 1, 5, value=int(current.get(key, 3)), format="%d ⭐", key=f"profile_{key}")
                 stars = "★" * val + "☆" * (5 - val)
-                st.markdown(
-                    f'<div style="color:#f59e0b;font-size:1.1rem">{stars}</div>',
-                    unsafe_allow_html=True,
-                )
+                st.markdown(f'<div style="color:#f59e0b;font-size:1.1rem">{stars}</div>', unsafe_allow_html=True)
                 new_interests[key] = val
 
         if st.button("💾 Sauvegarder mes centres d'intérêt", type="primary"):
-            update_user_interests(user["id"], new_interests)
-            # Mettre à jour la session
+            requests.put(f"{API_URL}/users/{user['id']}/interests", json=new_interests)
             st.session_state["user_interests"] = new_interests
             st.success("✅ Centres d'intérêt mis à jour !")
             st.rerun()
 
-    # ── FAVORIS ──────────────────────────────────────────────────
+    # ── FAVORIS ──
     with tab_favs:
-        favs = get_favorites(user["id"])
+        try:
+            favs = requests.get(f"{API_URL}/favorites", params={"user_id": user["id"]}).json()
+        except Exception:
+            favs = []
+
         if not favs:
             st.info("Aucune destination favorite. Lancez une recherche et cliquez sur 🤍 !")
         else:
@@ -463,43 +418,52 @@ def show_profile_tab(user: dict):
                 with c1:
                     st.markdown(f"**{fav['city']}** — {fav.get('country','')}")
                     st.caption(
-                        f"{fav.get('cluster_label','')} · {MONTH_NAMES.get(fav['month'], fav['month'])} · 🌡️ {fav.get('temp_avg',0):.1f}°C"
+                        f"{fav.get('cluster_label','')} · {MONTH_NAMES.get(int(fav['month']), fav['month'])} · 🌡️ {fav.get('temp_avg',0):.1f}°C"
                     )
                 with c2:
                     st.metric("Score", f"{fav['score_pct']:.0f}%")
                 with c3:
                     if st.button("🗑️", key=f"del_fav_{fav['id']}"):
-                        remove_favorite(user["id"], fav["city"], fav["month"])
+                        requests.delete(
+                            f"{API_URL}/favorites",
+                            json={"user_id": user["id"], "city": fav["city"], "month": int(fav["month"])},
+                        )
                         st.rerun()
                 st.divider()
 
-    # ── HISTORIQUE ────────────────────────────────────────────────
+    # ── HISTORIQUE ──
     with tab_history:
-        history = get_search_history(user["id"], limit=15)
+        try:
+            history = requests.get(f"{API_URL}/history", params={"user_id": user["id"], "limit": 15}).json()
+        except Exception:
+            history = []
+
         if not history:
             st.info("Aucune recherche effectuée.")
         else:
             for h in history:
                 searched_at = h["searched_at"][:16].replace("T", " à ")
-                with st.expander(
-                    f"📅 {searched_at} — Top : **{h['top_result']}** ({MONTH_NAMES.get(h['month'], h['month'])})"
-                ):
-                    prefs = h["preferences"]
+                try:
+                    m_idx = int(h["month"])
+                    m_lbl = MONTH_NAMES.get(m_idx, h["month"])
+                except ValueError:
+                    m_lbl = h["month"]
+
+                with st.expander(f"📅 {searched_at} — Top : **{h['top_result']}** ({m_lbl})"):
+                    prefs_h = h["preferences"]
                     c1, c2, c3 = st.columns(3)
                     with c1:
-                        st.metric("🌡️ Température", f"{prefs.get('temp_avg','?')}°C")
+                        st.metric("🌡️ Température", f"{prefs_h.get('temp_avg','?')}°C")
                     with c2:
-                        st.metric("🛡️ Confort", f"{prefs.get('indice_confort','?')}/100")
+                        st.metric("🛡️ Confort", f"{prefs_h.get('indice_confort','?')}/100")
                     with c3:
-                        st.metric("💰 Budget", prefs.get("budget_label", "?"))
+                        st.metric("💰 Budget", prefs_h.get("budget_label", "?"))
 
 
 # ─────────────────────────────────────────────
-#  MAIN
+#  FONCTION PRINCIPALE (MAIN)
 # ─────────────────────────────────────────────
 def main():
-    init_db()
-
     if not is_logged_in():
         show_auth_page()
         return
@@ -507,12 +471,21 @@ def main():
     user = get_current_user()
     show_user_widget()
 
-    # Charger les centres d'intérêt en session si pas encore fait
+    # Charger les centres d'intérêt en session depuis l'API si pas présent
     if "user_interests" not in st.session_state:
-        st.session_state["user_interests"] = get_user_interests(user["id"])
+        try:
+            st.session_state["user_interests"] = requests.get(f"{API_URL}/users/{user['id']}/interests").json()
+        except Exception:
+            st.session_state["user_interests"] = {
+                "nature": 3,
+                "patrimoine": 3,
+                "culture": 3,
+                "restaurant": 3,
+                "nightlife": 3,
+                "loisirs": 3,
+            }
 
     page = st.session_state.get("page", "app")
-
     if page == "admin":
         if st.sidebar.button("← Retour à l'app", use_container_width=True):
             st.session_state["page"] = "app"
@@ -522,75 +495,49 @@ def main():
 
     user_interests = st.session_state["user_interests"]
 
-    # ── SIDEBAR ──────────────────────────────────────────────────
+    # Construction Sidebar
     month, prefs, top_n, cluster_bonus = build_sidebar()
 
-    # Fusionner les centres d'intérêt dans les prefs pour le moteur
-    full_prefs = {**prefs, **user_interests}
-
-    # ── HERO ─────────────────────────────────────────────────────
+    # Titres Visuels
+    st.markdown('<div class="hero-title">Votre destination<br><i>idéale</i> vous attend.</div>', unsafe_allow_html=True)
     st.markdown(
-        '<div class="hero-title">Votre destination<br><i>idéale</i> vous attend.</div>',
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        '<div class="hero-sub">Affinez vos critères dans la barre latérale — '
-        "vos centres d'intérêt sont déjà pris en compte.</div>",
+        '<div class="hero-sub">Affinez vos critères dans la barre latérale — vos centres d\'intérêt sont déjà pris en compte.</div>',
         unsafe_allow_html=True,
     )
 
-    # ── CHARGEMENT DONNÉES ───────────────────────────────────────
-    try:
-        df = load_data(DATA_PATH)
-    except FileNotFoundError:
-        st.error(f"⚠️ Dataset introuvable : `{DATA_PATH}`")
-        return
-
-    # ___MAPPING___
-    revenu_col = "Revenu moyen par habitant ($/jour)"
-
-    # On définit les seuils basés sur la distribution réelle des données
-    low_threshold = df[revenu_col].quantile(0.25)  # Les 25% les moins chers
-    med_threshold = df[revenu_col].quantile(0.50)  # La médiane
-    high_threshold = df[revenu_col].quantile(0.75)  # Les 25% les plus chers
-
-    # ── RECOMMANDATION ───────────────────────────────────────────
+    # ── APPEL RECOMMANDATION VIA FASTAPI ──
     with st.spinner(f"🔍 Recherche pour {MONTH_NAMES[month]}…"):
-        results = recommend(
-            df,
-            month=month,
-            user_prefs=full_prefs,
-            top_n=top_n,
-            cluster_bonus_id=cluster_bonus,
-        )
+        payload = {
+            "month": month,
+            "user_id": user["id"],
+            "top_n": top_n,
+            "cluster_bonus": cluster_bonus,
+            "prefs": prefs,
+        }
+        try:
+            response = requests.post(f"{API_URL}/recommendations", json=payload)
+            if response.status_code == 200:
+                results = pd.DataFrame(response.json())
+            else:
+                st.error(f"Erreur du serveur : {response.json().get('detail', 'Inconnue')}")
+                return
+        except requests.exceptions.ConnectionError:
+            st.error("❌ Impossible de contacter le serveur FastAPI. Est-il démarré ?")
+            return
 
     if results.empty:
         st.error("Aucun résultat.")
         return
 
-    # Sauvegarder la recherche
-    city_col = "city" if "city" in results.columns else "ville"
-    top_city = results.iloc[0].get(city_col, "?")
-    save_search(
-        user["id"],
-        month,
-        {
-            **prefs,
-            "budget_label": (
-                [k for k, v in BUDGET_MAP.items() if v == prefs.get("budget_pct")][0]
-                if prefs.get("budget_pct") in BUDGET_MAP.values()
-                else "?"
-            ),
-        },
-        top_city,
-    )
+    # Détection dynamique du nom de colonne Ville
+    city_col = "city" if "city" in results.columns else ("ville" if "ville" in results.columns else results.columns[0])
 
-    # ── LAYOUT ───────────────────────────────────────────────────
+    # ── LAYOUT VISUEL (CARTE ET CLASSEMENT) ──
     col_map, col_results = st.columns([3, 2], gap="large")
 
     with col_map:
         st.markdown(f"### 🗺️ Top {top_n} — {MONTH_NAMES[month]}")
-        fmap = build_map(results)
+        fmap = build_map(results, city_col)
         if fmap:
             st_folium(fmap, width=None, height=500)
 
@@ -622,55 +569,48 @@ def main():
             score = row.get("score_pct", 0)
             cluster = row.get("cluster_label", "")
             temp = row.get("temp_avg", None)
+            dollars = row.get("Revenu moyen par habitant ($/jour)", None)
             country = row.get("country", "")
-            already_fav = is_favorite(user["id"], city_name, month)
 
-            with st.expander(
-                f"#{row['rang']}  {city_name}  —  {score:.0f}%",
-                expanded=row["rang"] <= 3,
-            ):
+            # Appel API pour vérifier le favori unitaire
+            try:
+                fav_check = requests.get(
+                    f"{API_URL}/favorites/check", params={"user_id": user["id"], "city": city_name, "month": month}
+                ).json()
+                already_fav = fav_check.get("is_favorite", False)
+            except Exception:
+                already_fav = False
+
+            with st.expander(f"#{row['rang']}  {city_name}  —  {score:.0f}%", expanded=row["rang"] <= 3):
                 c1, c2, c3 = st.columns([2, 1, 1])
                 with c1:
-                    st.markdown(
-                        f'<div class="dest-rank">#{row["rang"]} match</div>',
-                        unsafe_allow_html=True,
-                    )
-                    st.markdown(
-                        f'<div class="dest-name">{city_name}</div>',
-                        unsafe_allow_html=True,
-                    )
-                    st.markdown(
-                        f'<div class="dest-cluster">{cluster}</div>',
-                        unsafe_allow_html=True,
-                    )
+                    st.markdown(f'<div class="dest-rank">#{row["rang"]} match</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="dest-name">{city_name}</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="dest-cluster">{cluster}</div>', unsafe_allow_html=True)
                     if temp is not None:
                         st.caption(f"🌡️ {temp:.1f}°C en {MONTH_NAMES[month]}")
-                with c2:
-                    st.markdown(
-                        f'<div class="dest-score">{score:.0f}%</div>',
-                        unsafe_allow_html=True,
-                    )
+                    if dollars is not None:
+                        st.caption(f"💵 {dollars:.1f}$/jour")
+                    st.markdown(f'<div class="dest-score">{score:.0f}%</div>', unsafe_allow_html=True)
                 with c3:
                     fav_label = "❤️" if already_fav else "🤍"
-                    if st.button(
-                        fav_label,
-                        key=f"fav_{row['rang']}_{city_name}",
-                        use_container_width=True,
-                        help=("Retirer des favoris" if already_fav else "Ajouter aux favoris"),
-                    ):
+                    if st.button(fav_label, key=f"fav_{row['rang']}_{city_name}", use_container_width=True):
                         if already_fav:
-                            remove_favorite(user["id"], city_name, month)
+                            requests.delete(
+                                f"{API_URL}/favorites", json={"user_id": user["id"], "city": city_name, "month": month}
+                            )
                             st.toast(f"💔 {city_name} retiré des favoris")
                         else:
-                            add_favorite(
-                                user["id"],
-                                city_name,
-                                country,
-                                month,
-                                score,
-                                float(temp) if temp else 0,
-                                cluster,
-                            )
+                            payload_fav = {
+                                "user_id": user["id"],
+                                "city": city_name,
+                                "country": country,
+                                "month": month,
+                                "score_pct": float(score),
+                                "temp_avg": float(temp) if temp else 0.0,
+                                "cluster_label": cluster,
+                            }
+                            requests.post(f"{API_URL}/favorites", json=payload_fav)
                             st.toast(f"❤️ {city_name} ajouté aux favoris !")
                         st.rerun()
 
@@ -680,13 +620,10 @@ def main():
                 city_pics = get_cached_images(city_name, country)
                 display_image_carousel(city_pics)
 
-                description = row.get(
-                    "short_description",
-                    "Aucune description disponible pour cette destination.",
-                )
+                description = row.get("short_description", "Aucune description disponible pour cette destination.")
                 st.markdown(f"**À propos :** *{description}*")
 
-    # ── TABLEAU COMPARATIF ───────────────────────────────────────
+    # ── TABLEAU COMPARATIF ──
     st.markdown("---")
     display_cols = [
         city_col,
@@ -711,6 +648,7 @@ def main():
         "indice_securite": "Sécurité",
         city_col: "Ville",
     }
+
     st.markdown("### 📋 Comparatif")
     st.dataframe(
         results[display_cols]
@@ -721,7 +659,7 @@ def main():
         hide_index=True,
     )
 
-    # ── MON PROFIL ───────────────────────────────────────────────
+    # ── PROFIL GLOBAL ──
     st.markdown("---")
     st.markdown("### 👤 Mon profil")
     show_profile_tab(user)

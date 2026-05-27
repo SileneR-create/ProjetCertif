@@ -1,6 +1,7 @@
 version: "3.9"
 
 services:
+  # ── BASE DE DONNÉES (Inchangée) ──
   db:
     image: postgres:15
     container_name: postgres_db
@@ -8,21 +9,49 @@ services:
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: bigdata
+      POSTGRES_DB: bdd_projet_certif
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  app:
-    build: .
-    container_name: python_app
+  # ── BACKEND (Nouveau : FastAPI) ──
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile  # 👈 Utilise le Dockerfile du Back
+    container_name: fastapi_backend
+    restart: always
+    env_file:
+      - .env
     depends_on:
-      - db
-    volumes:
-      - .:/app
-    working_dir: /app
-    command: tail -f /dev/null  # garde le container actif
+      - db  # 👈 Attend que la DB soit prête
+    ports:
+      - "8000:8000"
+    environment:
+      # C'est maintenant le BACKEND qui parle à la base de données !
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: bdd_projet_certif
+      DB_USER: user
+      DB_PASSWORD: password
+
+  # ── FRONTEND (Modifié : Streamlit) ──
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile  # 👈 Utilise le Dockerfile du Front
+    container_name: streamlit_app
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      - backend  # 👈 Attend que l'API soit prête avant de se lancer
+    ports:
+      - "8501:8501"
+    environment:
+      # 💥 LA CLÉ : Streamlit ne parle plus à la DB, il parle au service 'backend' sur le port 8000
+      - API_URL=http://backend:8000
 
 volumes:
   postgres_data:

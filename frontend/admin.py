@@ -7,9 +7,15 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import json
+import sys
+import os
+
+sys.path.append(os.path.abspath(".."))
+
 from backend.database import get_connection, get_search_history
 from datetime import datetime, timedelta
-import json
+
 
 # ─────────────────────────────────────────────
 #  VÉRIFICATION ADMIN

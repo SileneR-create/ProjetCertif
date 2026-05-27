@@ -2,3 +2,4 @@
 diag.py
 front
 *.pkl
+tests/

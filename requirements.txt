@@ -19,3 +19,8 @@ streamlit-folium>=0.18.0
 sqlalchemy
 requests
 pytest
+python-dotenv
+fastapi
+uvicorn
+requests
+psycopg2-binary

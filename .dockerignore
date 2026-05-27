@@ -7,3 +7,6 @@ __pycache__/
 .git/
 .gitignore
 tests/
+diag.py
+front
+*.pkl
