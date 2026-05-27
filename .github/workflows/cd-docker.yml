@@ -28,7 +28,7 @@ jobs:
           context: .
           file: ./backend/Dockerfile  
           push: true
-          tags: ghcr.io/SileneR-create/projetcertif-backend:latest 
+          tags: ghcr.io/silener-create/projetcertif-backend:latest 
 
       # ── ÉTAPE 2 : Build & Push du FRONTEND (Streamlit) ──
       - name: Build and push Streamlit Frontend
@@ -37,4 +37,4 @@ jobs:
           context: .
           file: ./frontend/Dockerfile 
           push: true
-          tags: ghcr.io/SileneR-create/projetcertif-frontend:latest
+          tags: ghcr.io/silener-create/projetcertif-frontend:latest
