@@ -82,6 +82,36 @@ class FavoriteDeletePayload(BaseModel):
 def read_root():
     return {"status": "online", "message": "Welcome to TravelMatch API"}
 
+@app.get("/api/admin/stats")
+def get_api_user_stats():
+    """Route sécurisée ou appelée par le frontend pour récupérer les stats admin"""
+    try:
+        conn = get_connection()
+        c = conn.cursor()
+
+        # 1. Nombre total d'utilisateurs
+        c.execute("SELECT COUNT(*) FROM users")
+        total_users = c.fetchone()[0]
+
+        # 2. Nombre d'admins
+        c.execute("SELECT COUNT(*) FROM users WHERE is_admin = 1")
+        total_admins = c.fetchone()[0]
+
+        c.close()
+        conn.close()
+
+        # On renvoie un dictionnaire (FastAPI le convertit automatiquement en JSON)
+        return {
+            "total_users": total_users,
+            "total_admins": total_admins
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erreur lors de la récupération des stats : {str(e)}"
+        )
+    
 @app.post("/auth/register")
 def api_register(user: UserRegister):
     result = register_user(user.username, user.email, user.password, user.interests)

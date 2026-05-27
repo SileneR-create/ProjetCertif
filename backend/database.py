@@ -1,379 +1,385 @@
-"""
-database.py — Gestion de la base de données SQLite
-Tables : users, favorites, search_history, profiles
-"""
-
-import sqlite3
+import json
 import hashlib
 import secrets
-import json
 from datetime import datetime
+from sqlalchemy import (
+    create_engine,
+    Column,
+    Integer,
+    String,
+    Float,
+    Text,
+    ForeignKey,
+    UniqueConstraint,
+)
+from sqlalchemy.orm import declarative_base, sessionmaker
 
-DB_PATH = "travelmatch.db"
+# Import des configurations de variables d'environnement adaptées à Docker
+from .scripts.DB_CONFIG import DB_CONFIG
+
+# Reconstruction dynamique de l'URL pour Docker
+DATABASE_URL = (
+    f"postgresql+psycopg2://{DB_CONFIG['user']}:{DB_CONFIG['password']}"
+    f"@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['dbname']}"
+)
+
+# Initialisation sûre de l'Engine et de la Session
+engine = create_engine(DATABASE_URL, echo=False)
+SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+Base = declarative_base()
 
 
-def get_connection():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+# ─── MODELS SQLALCHEMY ───────────────────────────────────
 
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True)
+    username = Column(String, unique=True, nullable=False)
+    email = Column(String, unique=True, nullable=False)
+    password = Column(String, nullable=False)
+    salt = Column(String, nullable=False)
+    created_at = Column(String, nullable=False)
+    is_admin = Column(Integer, default=0)
+
+
+class Favorite(Base):
+    __tablename__ = "favorites"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    city = Column(String, nullable=False)
+    country = Column(String)
+    month = Column(Integer, nullable=False)
+    score_pct = Column(Float)
+    temp_avg = Column(Float)
+    cluster_label = Column(String)
+    saved_at = Column(String, nullable=False)
+
+    __table_args__ = (UniqueConstraint("user_id", "city", "month"),)
+
+
+class SearchHistory(Base):
+    __tablename__ = "search_history"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    month = Column(Integer, nullable=False)
+    preferences = Column(Text, nullable=False)
+    top_result = Column(Text)
+    searched_at = Column(String, nullable=False)
+
+
+class Profile(Base):
+    __tablename__ = "profiles"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    name = Column(String, nullable=False)
+    preferences = Column(Text, nullable=False)
+    created_at = Column(String, nullable=False)
+    updated_at = Column(String, nullable=False)
+
+    __table_args__ = (UniqueConstraint("user_id", "name"),)
+
+
+class UserInterests(Base):
+    __tablename__ = "user_interests"
+
+    user_id = Column(Integer, primary_key=True)
+    interests = Column(Text, nullable=False)
+    updated_at = Column(String, nullable=False)
+
+
+# ─── DB INITIALIZATION ───────────────────────────────────
 
 def init_db():
-    conn = get_connection()
-    c = conn.cursor()
-
-    c.execute(
-        """
-        CREATE TABLE IF NOT EXISTS users (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            username    TEXT    UNIQUE NOT NULL,
-            email       TEXT    UNIQUE NOT NULL,
-            password    TEXT    NOT NULL,
-            salt        TEXT    NOT NULL,
-            created_at  TEXT    NOT NULL,
-            is_admin INTEGER DEFAULT 0
-        )
-    """
-    )
-
-    c.execute(
-        """
-        CREATE TABLE IF NOT EXISTS favorites (
-            id            INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id       INTEGER NOT NULL,
-            city          TEXT    NOT NULL,
-            country       TEXT,
-            month         INTEGER NOT NULL,
-            score_pct     REAL,
-            temp_avg      REAL,
-            cluster_label TEXT,
-            saved_at      TEXT    NOT NULL,
-            FOREIGN KEY (user_id) REFERENCES users(id),
-            UNIQUE(user_id, city, month)
-        )
-    """
-    )
-
-    c.execute(
-        """
-        CREATE TABLE IF NOT EXISTS search_history (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id     INTEGER NOT NULL,
-            month       INTEGER NOT NULL,
-            preferences TEXT    NOT NULL,
-            top_result  TEXT,
-            searched_at TEXT    NOT NULL,
-            FOREIGN KEY (user_id) REFERENCES users(id)
-        )
-    """
-    )
-
-    c.execute(
-        """
-        CREATE TABLE IF NOT EXISTS profiles (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id     INTEGER NOT NULL,
-            name        TEXT    NOT NULL,
-            preferences TEXT    NOT NULL,
-            created_at  TEXT    NOT NULL,
-            updated_at  TEXT    NOT NULL,
-            FOREIGN KEY (user_id) REFERENCES users(id),
-            UNIQUE(user_id, name)
-        )
-    """
-    )
-
-    c.execute(
-        """
-    CREATE TABLE IF NOT EXISTS user_interests (
-        user_id     INTEGER PRIMARY KEY,
-        interests   TEXT NOT NULL,
-        updated_at  TEXT NOT NULL
-        )
-    """
-    )
-
-    conn.commit()
-    conn.close()
+    """Crée les tables dans PostgreSQL si elles n'existent pas"""
+    Base.metadata.create_all(bind=engine)
 
 
-# ─── AUTH ───────────────────────────────────────────────────────────────────
+def get_session():
+    return SessionLocal()
 
 
 def _hash_password(password: str, salt: str) -> str:
     return hashlib.sha256(f"{password}{salt}".encode()).hexdigest()
 
 
-"""
-def register_user(username, email, password):
-    conn = get_connection()
-    c = conn.cursor()
-    try:
-        salt = secrets.token_hex(16)
-        hashed = _hash_password(password, salt)
-        c.execute(
-            "INSERT INTO users (username, email, password, salt, created_at) VALUES (?, ?, ?, ?, ?)",
-            (username.strip(), email.strip().lower(), hashed, salt, datetime.now().isoformat())
-        )
-        conn.commit()
-        return {"success": True, "user_id": c.lastrowid}
-    except sqlite3.IntegrityError as e:
-        if "username" in str(e):
-            return {"success": False, "error": "Ce nom d'utilisateur est déjà pris."}
-        if "email" in str(e):
-            return {"success": False, "error": "Cet email est déjà utilisé."}
-        return {"success": False, "error": str(e)}
-    finally:
-        conn.close()
-        """
-
+# ─── AUTHENTICATION ──────────────────────────────────────
 
 def login_user(username, password):
-    conn = get_connection()
-    c = conn.cursor()
+    session = get_session()
     try:
-        c.execute("SELECT * FROM users WHERE username = ?", (username.strip(),))
-        user = c.fetchone()
+        user = session.query(User).filter_by(username=username.strip()).first()
         if not user:
             return {"success": False, "error": "Nom d'utilisateur introuvable."}
-        if _hash_password(password, user["salt"]) != user["password"]:
+
+        if _hash_password(password, user.salt) != user.password:
             return {"success": False, "error": "Mot de passe incorrect."}
-        return {"success": True, "user": dict(user)}
+
+        return {
+            "success": True,
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "created_at": user.created_at,
+                "is_admin": user.is_admin,
+            },
+        }
     finally:
-        conn.close()
+        session.close()
 
 
-# ─── PROFILS ────────────────────────────────────────────────────────────────
+# ─── PROFILES MANAGEMENT ─────────────────────────────────
 
-
-def save_profile(user_id: int, name: str, preferences: dict) -> dict:
-    """Crée ou met à jour un profil (upsert sur user_id + name)."""
-    conn = get_connection()
-    c = conn.cursor()
+def save_profile(user_id: int, name: str, preferences: dict):
+    session = get_session()
     try:
         now = datetime.now().isoformat()
-        c.execute(
-            """
-            INSERT INTO profiles (user_id, name, preferences, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?)
-            ON CONFLICT(user_id, name) DO UPDATE SET
-                preferences = excluded.preferences,
-                updated_at  = excluded.updated_at
-        """,
-            (user_id, name.strip(), json.dumps(preferences), now, now),
-        )
-        conn.commit()
+        profile = session.query(Profile).filter_by(user_id=user_id, name=name.strip()).first()
+
+        if profile:
+            profile.preferences = json.dumps(preferences)
+            profile.updated_at = now
+        else:
+            profile = Profile(
+                user_id=user_id,
+                name=name.strip(),
+                preferences=json.dumps(preferences),
+                created_at=now,
+                updated_at=now,
+            )
+            session.add(profile)
+
+        session.commit()
         return {"success": True}
     except Exception as e:
+        session.rollback()
         return {"success": False, "error": str(e)}
     finally:
-        conn.close()
+        session.close()
 
 
-def get_profiles(user_id: int) -> list:
-    conn = get_connection()
-    c = conn.cursor()
-    c.execute("SELECT * FROM profiles WHERE user_id=? ORDER BY updated_at DESC", (user_id,))
-    rows = []
-    for r in c.fetchall():
-        row = dict(r)
-        row["preferences"] = json.loads(row["preferences"])
-        rows.append(row)
-    conn.close()
-    return rows
-
-
-def delete_profile(profile_id: int, user_id: int) -> dict:
-    conn = get_connection()
-    c = conn.cursor()
+def get_profiles(user_id: int):
+    session = get_session()
     try:
-        c.execute("DELETE FROM profiles WHERE id=? AND user_id=?", (profile_id, user_id))
-        conn.commit()
+        profiles = session.query(Profile).filter_by(user_id=user_id).order_by(Profile.updated_at.desc()).all()
+        return [
+            {
+                "id": p.id,
+                "user_id": p.user_id,
+                "name": p.name,
+                "preferences": json.loads(p.preferences),
+                "created_at": p.created_at,
+                "updated_at": p.updated_at,
+            }
+            for p in profiles
+        ]
+    finally:
+        session.close()
+
+
+def delete_profile(profile_id: int, user_id: int):
+    session = get_session()
+    try:
+        session.query(Profile).filter_by(id=profile_id, user_id=user_id).delete()
+        session.commit()
         return {"success": True}
     finally:
-        conn.close()
+        session.close()
 
 
-# ─── FAVORIS ────────────────────────────────────────────────────────────────
-
+# ─── FAVORITES MANAGEMENT ────────────────────────────────
 
 def add_favorite(user_id, city, country, month, score_pct, temp_avg, cluster_label):
-    conn = get_connection()
-    c = conn.cursor()
+    session = get_session()
     try:
-        c.execute(
-            """
-            INSERT OR REPLACE INTO favorites
-            (user_id, city, country, month, score_pct, temp_avg, cluster_label, saved_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-            (
-                user_id,
-                city,
-                country,
-                month,
-                score_pct,
-                temp_avg,
-                cluster_label,
-                datetime.now().isoformat(),
-            ),
-        )
-        conn.commit()
+        fav = session.query(Favorite).filter_by(user_id=user_id, city=city, month=month).first()
+        now = datetime.now().isoformat()
+
+        if fav:
+            fav.country = country
+            fav.score_pct = score_pct
+            fav.temp_avg = temp_avg
+            fav.cluster_label = cluster_label
+            fav.saved_at = now
+        else:
+            fav = Favorite(
+                user_id=user_id,
+                city=city,
+                country=country,
+                month=month,
+                score_pct=score_pct,
+                temp_avg=temp_avg,
+                cluster_label=cluster_label,
+                saved_at=now,
+            )
+            session.add(fav)
+
+        session.commit()
         return {"success": True}
     except Exception as e:
+        session.rollback()
         return {"success": False, "error": str(e)}
     finally:
-        conn.close()
+        session.close()
 
 
 def remove_favorite(user_id, city, month):
-    conn = get_connection()
-    c = conn.cursor()
-    c.execute(
-        "DELETE FROM favorites WHERE user_id=? AND city=? AND month=?",
-        (user_id, city, month),
-    )
-    conn.commit()
-    conn.close()
-    return {"success": True}
+    session = get_session()
+    try:
+        session.query(Favorite).filter_by(user_id=user_id, city=city, month=month).delete()
+        session.commit()
+        return {"success": True}
+    finally:
+        session.close()
 
 
 def get_favorites(user_id):
-    conn = get_connection()
-    c = conn.cursor()
-    c.execute("SELECT * FROM favorites WHERE user_id=? ORDER BY saved_at DESC", (user_id,))
-    rows = [dict(r) for r in c.fetchall()]
-    conn.close()
-    return rows
+    session = get_session()
+    try:
+        favs = session.query(Favorite).filter_by(user_id=user_id).order_by(Favorite.saved_at.desc()).all()
+        # Modifié pour extraire proprement les dictionnaires sans métadonnées SQLAlchemy conflictuelles
+        return [
+            {
+                "id": f.id,
+                "user_id": f.user_id,
+                "city": f.city,
+                "country": f.country,
+                "month": f.month,
+                "score_pct": f.score_pct,
+                "temp_avg": f.temp_avg,
+                "cluster_label": f.cluster_label,
+                "saved_at": f.saved_at,
+            }
+            for f in favs
+        ]
+    finally:
+        session.close()
 
 
 def is_favorite(user_id, city, month):
-    conn = get_connection()
-    c = conn.cursor()
-    c.execute(
-        "SELECT 1 FROM favorites WHERE user_id=? AND city=? AND month=?",
-        (user_id, city, month),
-    )
-    result = c.fetchone() is not None
-    conn.close()
-    return result
+    session = get_session()
+    try:
+        return session.query(Favorite).filter_by(user_id=user_id, city=city, month=month).first() is not None
+    finally:
+        session.close()
 
 
-# ─── HISTORIQUE ─────────────────────────────────────────────────────────────
-
+# ─── SEARCH HISTORY ──────────────────────────────────────
 
 def save_search(user_id, month, preferences, top_result):
-    conn = get_connection()
-    c = conn.cursor()
-    c.execute(
-        """
-        INSERT INTO search_history (user_id, month, preferences, top_result, searched_at)
-        VALUES (?, ?, ?, ?, ?)
-    """,
-        (
-            user_id,
-            month,
-            json.dumps(preferences),
-            top_result,
-            datetime.now().isoformat(),
-        ),
-    )
-    conn.commit()
-    conn.close()
+    session = get_session()
+    try:
+        session.add(
+            SearchHistory(
+                user_id=user_id,
+                month=month,
+                preferences=json.dumps(preferences),
+                top_result=top_result,
+                searched_at=datetime.now().isoformat(),
+            )
+        )
+        session.commit()
+    finally:
+        session.close()
 
 
 def get_search_history(user_id, limit=10):
-    conn = get_connection()
-    c = conn.cursor()
-    c.execute(
-        """
-        SELECT * FROM search_history WHERE user_id=?
-        ORDER BY searched_at DESC LIMIT ?
-    """,
-        (user_id, limit),
-    )
-    rows = []
-    for r in c.fetchall():
-        row = dict(r)
-        row["preferences"] = json.loads(row["preferences"])
-        rows.append(row)
-    conn.close()
-    return rows
+    session = get_session()
+    try:
+        rows = (
+            session.query(SearchHistory)
+            .filter_by(user_id=user_id)
+            .order_by(SearchHistory.searched_at.desc())
+            .limit(limit)
+            .all()
+        )
+        return [
+            {
+                "id": r.id,
+                "month": r.month,
+                "preferences": json.loads(r.preferences),
+                "top_result": r.top_result,
+                "searched_at": r.searched_at,
+            }
+            for r in rows
+        ]
+    finally:
+        session.close()
 
 
-# ─── CENTRES D'INTÉRÊT ──────────────────────────────────────────────────────
-
+# ─── USER INTERESTS ──────────────────────────────────────
 
 def register_user(username, email, password, interests: dict):
-    """Version étendue avec centres d'intérêt à l'inscription."""
-    conn = get_connection()
-    c = conn.cursor()
+    session = get_session()
     try:
         salt = secrets.token_hex(16)
         hashed = _hash_password(password, salt)
-        c.execute(
-            "INSERT INTO users (username, email, password, salt, created_at) VALUES (?, ?, ?, ?, ?)",
-            (
-                username.strip(),
-                email.strip().lower(),
-                hashed,
-                salt,
-                datetime.now().isoformat(),
-            ),
+
+        user = User(
+            username=username.strip(),
+            email=email.strip().lower(),
+            password=hashed,
+            salt=salt,
+            created_at=datetime.now().isoformat(),
         )
-        user_id = c.lastrowid
-        # Sauvegarder les centres d'intérêt
-        c.execute(
-            """
-            INSERT OR REPLACE INTO user_interests (user_id, interests, updated_at)
-            VALUES (?, ?, ?)
-        """,
-            (user_id, json.dumps(interests), datetime.now().isoformat()),
+        session.add(user)
+        session.flush()  # Assigne l'ID automatiquement généré par PostgreSQL
+
+        session.add(
+            UserInterests(
+                user_id=user.id,
+                interests=json.dumps(interests),
+                updated_at=datetime.now().isoformat(),
+            )
         )
-        conn.commit()
-        return {"success": True, "user_id": user_id}
-    except sqlite3.IntegrityError as e:
-        if "username" in str(e):
-            return {"success": False, "error": "Ce nom d'utilisateur est déjà pris."}
-        if "email" in str(e):
-            return {"success": False, "error": "Cet email est déjà utilisé."}
+        session.commit()
+        return {"success": True, "user_id": user.id}
+    except Exception as e:
+        session.rollback()
         return {"success": False, "error": str(e)}
     finally:
-        conn.close()
+        session.close()
 
 
-def get_user_interests(user_id: int) -> dict:
-    conn = get_connection()
-    c = conn.cursor()
-    c.execute("SELECT interests FROM user_interests WHERE user_id=?", (user_id,))
-    row = c.fetchone()
-    conn.close()
-    if row:
-        return json.loads(row["interests"])
-    return {
-        "nature": 3,
-        "patrimoine": 3,
-        "culture": 3,
-        "restaurant": 3,
-        "nightlife": 3,
-        "loisirs": 3,
-    }
-
-
-def update_user_interests(user_id: int, interests: dict) -> dict:
-    conn = get_connection()
-    c = conn.cursor()
+def get_user_interests(user_id: int):
+    session = get_session()
     try:
-        c.execute(
-            """
-            INSERT OR REPLACE INTO user_interests (user_id, interests, updated_at)
-            VALUES (?, ?, ?)
-        """,
-            (user_id, json.dumps(interests), datetime.now().isoformat()),
-        )
-        conn.commit()
+        row = session.query(UserInterests).filter_by(user_id=user_id).first()
+        if row:
+            return json.loads(row.interests)
+        return {
+            "nature": 3,
+            "patrimoine": 3,
+            "culture": 3,
+            "restaurant": 3,
+            "nightlife": 3,
+            "loisirs": 3,
+        }
+    finally:
+        session.close()
+
+
+def update_user_interests(user_id: int, interests: dict):
+    session = get_session()
+    try:
+        row = session.query(UserInterests).filter_by(user_id=user_id).first()
+        now = datetime.now().isoformat()
+
+        if row:
+            row.interests = json.dumps(interests)
+            row.updated_at = now
+        else:
+            row = UserInterests(user_id=user_id, interests=json.dumps(interests), updated_at=now)
+            session.add(row)
+
+        session.commit()
         return {"success": True}
     except Exception as e:
+        session.rollback()
         return {"success": False, "error": str(e)}
     finally:
-        conn.close()
+        session.close()

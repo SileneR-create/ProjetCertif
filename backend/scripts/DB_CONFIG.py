@@ -1,8 +1,11 @@
-# Configuration de la connexion PostgreSQL
+import os
+
 DB_CONFIG = {
-    "host": "localhost",
-    "port": 5432,
-    "dbname": "BDD_Projet_Certif",
-    "user": "ton_utilisateur",
-    "password": "ton_mot_de_passe",
+    # os.getenv cherche la variable injectée par Docker-compose.
+    # Si elle n'existe pas (en local), il se rabat sur "localhost"
+    "host": os.getenv("DB_HOST", "localhost"),
+    "port": int(os.getenv("DB_PORT", 5432)),
+    "dbname": os.getenv("DB_NAME", "bdd_projet_certif"),
+    "user": os.getenv("DB_USER", "user"),
+    "password": os.getenv("DB_PASSWORD", "password"),
 }

@@ -19,13 +19,13 @@ services:
   backend:
     build:
       context: .
-      dockerfile: backend/Dockerfile  # 👈 Utilise le Dockerfile du Back
+      dockerfile: backend/Dockerfile  
     container_name: fastapi_backend
     restart: always
     env_file:
       - .env
     depends_on:
-      - db  # 👈 Attend que la DB soit prête
+      - db  
     ports:
       - "8000:8000"
     environment:
@@ -40,13 +40,13 @@ services:
   frontend:
     build:
       context: .
-      dockerfile: frontend/Dockerfile  # 👈 Utilise le Dockerfile du Front
+      dockerfile: frontend/Dockerfile  
     container_name: streamlit_app
     restart: always
     env_file:
       - .env
     depends_on:
-      - backend  # 👈 Attend que l'API soit prête avant de se lancer
+      - backend
     ports:
       - "8501:8501"
     environment:

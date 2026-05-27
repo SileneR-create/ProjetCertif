@@ -10,10 +10,11 @@ import plotly.graph_objects as go
 import json
 import sys
 import os
+import requests
 
 sys.path.append(os.path.abspath(".."))
 
-from backend.database import get_connection, get_search_history
+from backend.database import get_search_history
 from datetime import datetime, timedelta
 
 
@@ -39,39 +40,23 @@ def require_admin(user: dict) -> bool:
 # ─────────────────────────────────────────────
 
 
+API_URL = os.getenv("API_URL", "http://localhost:8000")
+
 def get_user_stats() -> dict:
-    conn = get_connection()
-    c = conn.cursor()
-
-    c.execute("SELECT COUNT(*) FROM users")
-    total_users = c.fetchone()[0]
-
-    c.execute("SELECT COUNT(*) FROM users WHERE is_admin = 1")
-    total_admins = c.fetchone()[0]
-
-    # Inscriptions des 30 derniers jours
-    since = (datetime.now() - timedelta(days=30)).isoformat()
-    c.execute("SELECT COUNT(*) FROM users WHERE created_at >= ?", (since,))
-    new_users_30d = c.fetchone()[0]
-
-    # Inscriptions par jour (30 derniers jours)
-    c.execute(
-        """
-        SELECT substr(created_at, 1, 10) as day, COUNT(*) as nb
-        FROM users WHERE created_at >= ?
-        GROUP BY day ORDER BY day
-    """,
-        (since,),
-    )
-    signups_by_day = [{"date": r[0], "inscriptions": r[1]} for r in c.fetchall()]
-
-    conn.close()
-    return {
-        "total_users": total_users,
-        "total_admins": total_admins,
-        "new_users_30d": new_users_30d,
-        "signups_by_day": signups_by_day,
-    }
+    """Va chercher les statistiques via l'API FastAPI"""
+    try:
+        # Appel de la route qu'on vient de créer
+        response = requests.get(f"{API_URL}/api/admin/stats")
+        
+        if response.status_code == 200:
+            return response.json() # Contient {"total_users": X, "total_admins": Y}
+        else:
+            st.error(f"Impossible de charger les stats (Code {response.status_code})")
+            return {"total_users": 0, "total_admins": 0}
+            
+    except Exception as e:
+        st.error(f"Erreur de connexion au backend : {e}")
+        return {"total_users": 0, "total_admins": 0}
 
 
 def get_search_stats() -> dict:
