@@ -26,15 +26,15 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./backend/Dockerfile  # 👈 INDIQUE LE CHEMIN DU DOCKERFILE BACK
+          file: ./backend/Dockerfile  
           push: true
-          tags: ***/projetcertif-backend:latest # 💡 Astuce : donnez-lui un nom clair
+          tags: SileneR-create/projetcertif-backend:latest 
 
       # ── ÉTAPE 2 : Build & Push du FRONTEND (Streamlit) ──
       - name: Build and push Streamlit Frontend
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./frontend/Dockerfile # 👈 INDIQUE LE CHEMIN DU DOCKERFILE FRONT
+          file: ./frontend/Dockerfile 
           push: true
-          tags: ***/projetcertif-frontend:latest
+          tags: SileneR-create/projetcertif-frontend:latest
