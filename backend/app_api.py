@@ -28,13 +28,12 @@ from backend.database import (
 )
 
 app = FastAPI(
-    title="TravelMatch API",
-    description="Backend de recommandation de destinations de voyage",
-    version="1.0.0"
+    title="TravelMatch API", description="Backend de recommandation de destinations de voyage", version="1.0.0"
 )
 
 df_global: pd.DataFrame = None
 categorizer: BudgetCategorizer = None
+
 
 @app.on_event("startup")
 def startup_event():
@@ -47,9 +46,11 @@ def startup_event():
     df_global = engineer_features(df_raw)
     categorizer = BudgetCategorizer(df_global, n_categories=4)
 
+
 class UserLogin(BaseModel):
     username: str
     password: str
+
 
 class UserRegister(BaseModel):
     username: str
@@ -57,12 +58,14 @@ class UserRegister(BaseModel):
     password: str
     interests: Dict[str, int]
 
+
 class RecommendRequest(BaseModel):
     month: int
     user_id: int
     top_n: int = 10
     cluster_bonus: Optional[int] = None
     prefs: Dict[str, Any]
+
 
 class FavoritePayload(BaseModel):
     user_id: int
@@ -73,51 +76,25 @@ class FavoritePayload(BaseModel):
     temp_avg: float
     cluster_label: Optional[str] = ""
 
+
 class FavoriteDeletePayload(BaseModel):
     user_id: int
     city: str
     month: int
 
+
 @app.get("/")
 def read_root():
     return {"status": "online", "message": "Welcome to TravelMatch API"}
 
-@app.get("/api/admin/stats")
-def get_api_user_stats():
-    """Route sécurisée ou appelée par le frontend pour récupérer les stats admin"""
-    try:
-        conn = get_connection()
-        c = conn.cursor()
 
-        # 1. Nombre total d'utilisateurs
-        c.execute("SELECT COUNT(*) FROM users")
-        total_users = c.fetchone()[0]
-
-        # 2. Nombre d'admins
-        c.execute("SELECT COUNT(*) FROM users WHERE is_admin = 1")
-        total_admins = c.fetchone()[0]
-
-        c.close()
-        conn.close()
-
-        # On renvoie un dictionnaire (FastAPI le convertit automatiquement en JSON)
-        return {
-            "total_users": total_users,
-            "total_admins": total_admins
-        }
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Erreur lors de la récupération des stats : {str(e)}"
-        )
-    
 @app.post("/auth/register")
 def api_register(user: UserRegister):
     result = register_user(user.username, user.email, user.password, user.interests)
     if not result["success"]:
         raise HTTPException(status_code=400, detail=result["error"])
     return {"message": "Utilisateur cree avec succes"}
+
 
 @app.post("/auth/login")
 def api_login(user: UserLogin):
@@ -126,9 +103,11 @@ def api_login(user: UserLogin):
         raise HTTPException(status_code=41, detail=result["error"])
     return {"user": result["user"]}
 
+
 @app.get("/users/{user_id}/interests")
 def get_api_user_interests(user_id: int):
     return get_user_interests(user_id)
+
 
 @app.put("/users/{user_id}/interests")
 def update_api_user_interests(user_id: int, interests: Dict[str, int]):
@@ -138,11 +117,13 @@ def update_api_user_interests(user_id: int, interests: Dict[str, int]):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.get("/budget/info")
 def get_budget_info():
     if categorizer is None:
         raise HTTPException(status_code=503, detail="Service indisponible")
     return categorizer.get_category_stats()
+
 
 @app.get("/budget/map-value")
 def get_budget_map_value(label: str = Query(...)):
@@ -150,14 +131,15 @@ def get_budget_map_value(label: str = Query(...)):
         return 1
     return categorizer.budget_map.get(label, 1)
 
+
 @app.post("/recommendations")
 def get_recommendations(req: RecommendRequest):
     if df_global is None:
         raise HTTPException(status_code=503, detail="Donnees non pretes")
-    
+
     user_db_interests = get_user_interests(req.user_id)
     full_prefs = {**req.prefs, **user_db_interests}
-    
+
     try:
         results_df = recommend(
             df_global,
@@ -174,13 +156,16 @@ def get_recommendations(req: RecommendRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.get("/favorites")
 def get_api_favorites(user_id: int):
     return get_favorites(user_id)
 
+
 @app.get("/favorites/check")
 def check_api_favorite(user_id: int, city: str, month: int):
     return {"is_favorite": is_favorite(user_id, city, month)}
+
 
 @app.post("/favorites")
 def add_api_favorite(fav: FavoritePayload):
@@ -190,6 +175,7 @@ def add_api_favorite(fav: FavoritePayload):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.delete("/favorites")
 def remove_api_favorite(fav: FavoriteDeletePayload):
     try:
@@ -197,6 +183,7 @@ def remove_api_favorite(fav: FavoriteDeletePayload):
         return {"message": "Favori retire"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/history")
 def get_api_history(user_id: int, limit: int = 15):
