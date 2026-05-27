@@ -21,10 +21,20 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push
-        uses: docker/build-push-action@v6
+      # ── ÉTAPE 1 : Build & Push du BACKEND (FastAPI) ──
+      - name: Build and push FastAPI Backend
+        uses: docker/build-push-action@v5
         with:
           context: .
+          file: ./backend/Dockerfile  # 👈 INDIQUE LE CHEMIN DU DOCKERFILE BACK
           push: true
-          tags: |
-            ${{ secrets.DOCKER_USERNAME }}/projetcertif:latest
+          tags: ***/projetcertif-backend:latest # 💡 Astuce : donnez-lui un nom clair
+
+      # ── ÉTAPE 2 : Build & Push du FRONTEND (Streamlit) ──
+      - name: Build and push Streamlit Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./frontend/Dockerfile # 👈 INDIQUE LE CHEMIN DU DOCKERFILE FRONT
+          push: true
+          tags: ***/projetcertif-frontend:latest
