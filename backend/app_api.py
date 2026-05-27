@@ -25,6 +25,11 @@ from backend.database import (
     get_user_interests,
     register_user,
     login_user,
+    # ➕ Ajout des imports d'administration SQLAlchemy
+    db_get_user_stats,
+    db_get_all_users,
+    db_delete_user,
+    db_get_admin_search_history,
 )
 
 app = FastAPI(
@@ -100,7 +105,7 @@ def api_register(user: UserRegister):
 def api_login(user: UserLogin):
     result = login_user(user.username, user.password)
     if not result["success"]:
-        raise HTTPException(status_code=41, detail=result["error"])
+        raise HTTPException(status_code=401, detail=result["error"])
     return {"user": result["user"]}
 
 
@@ -188,3 +193,34 @@ def remove_api_favorite(fav: FavoriteDeletePayload):
 @app.get("/history")
 def get_api_history(user_id: int, limit: int = 15):
     return get_search_history(user_id, limit=limit)
+
+
+# ─────────────────────────────────────────────────────────
+# ➕ NOUVELLES ROUTES POUR LE PANNEAU D'ADMINISTRATION
+# ─────────────────────────────────────────────────────────
+
+@app.get("/api/admin/stats")
+def admin_stats():
+    """Renvoie le nombre global d'utilisateurs et d'admins."""
+    return db_get_user_stats()
+
+
+@app.get("/api/admin/users")
+def admin_users():
+    """Renvoie la liste complète des comptes utilisateurs."""
+    return db_get_all_users()
+
+
+@app.delete("/api/admin/users/{user_id}")
+def admin_delete(user_id: int):
+    """Supprime un compte utilisateur."""
+    success = db_delete_user(user_id)
+    if not success:
+        raise HTTPException(status_code=500, detail="Erreur interne lors de la suppression.")
+    return {"status": "success", "message": "Utilisateur supprime."}
+
+
+@app.get("/api/admin/history")
+def admin_history():
+    """Renvoie l'historique complet des recherches de l'application."""
+    return db_get_admin_search_history()

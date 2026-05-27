@@ -6,8 +6,6 @@ Accessible uniquement aux utilisateurs avec is_admin = 1
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
-import json
 import os
 import requests
 
@@ -18,10 +16,8 @@ API_URL = os.getenv("API_URL", "http://localhost:8000")
 #  VÉRIFICATION ADMIN
 # ─────────────────────────────────────────────
 
-
 def is_admin(user: dict) -> bool:
     return bool(user.get("is_admin", 0))
-
 
 def require_admin(user: dict) -> bool:
     """Retourne True si admin, affiche une erreur sinon."""
@@ -30,11 +26,9 @@ def require_admin(user: dict) -> bool:
         return False
     return True
 
-
 # ─────────────────────────────────────────────
 #  REQUÊTES API (Remplacent le SQL direct)
 # ─────────────────────────────────────────────
-
 
 def get_user_stats() -> dict:
     """Récupère les statistiques globales via l'API."""
@@ -48,7 +42,6 @@ def get_user_stats() -> dict:
         st.error(f"Erreur de connexion au backend : {e}")
         return {"total_users": 0, "total_admins": 0}
 
-
 def get_all_users() -> list:
     """Récupère la liste de tous les utilisateurs via l'API."""
     try:
@@ -59,7 +52,6 @@ def get_all_users() -> list:
     except Exception as e:
         st.error(f"Impossible de récupérer les utilisateurs : {e}")
         return []
-
 
 def delete_user(user_id: int) -> bool:
     """Demande la suppression d'un utilisateur au backend."""
@@ -73,7 +65,6 @@ def delete_user(user_id: int) -> bool:
         st.error(f"Erreur de connexion : {e}")
         return False
 
-
 def get_admin_search_history() -> list:
     """Récupère l'historique global de recherche via l'API."""
     try:
@@ -85,11 +76,9 @@ def get_admin_search_history() -> list:
         st.error(f"Impossible de récupérer l'historique : {e}")
         return []
 
-
 # ─────────────────────────────────────────────
 #  INTERFACE GRAPHIQUE (UI)
 # ─────────────────────────────────────────────
-
 
 def show_admin_page():
     """Affiche le tableau de bord d'administration."""
@@ -125,7 +114,7 @@ def show_admin_page():
                 with col_info:
                     badge = "🛡️ Admin" if u["is_admin"] else "👤 User"
                     st.markdown(f"**{u['username']}** ({u['email']}) — `{badge}`")
-
+                
                 with col_action:
                     # Empêcher l'admin de se supprimer lui-même
                     if u["id"] != current_user.get("id"):
@@ -158,7 +147,7 @@ def show_admin_page():
             df = pd.DataFrame(history_data)
             st.dataframe(df, use_container_width=True)
 
-            # Petit graphique rapide si des données existent
+            # Graphique Analytics
             if not df.empty and "query" in df.columns:
                 st.markdown("### 🔝 Top Destinations Recherchées")
                 top_queries = df["query"].value_counts().reset_index()
