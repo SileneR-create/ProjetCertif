@@ -32,7 +32,7 @@ jobs:
           context: .
           file: ./backend/Dockerfile  
           push: true
-          tags: silener-create/projetcertif-backend:latest 
+          tags: silener/projetcertif-backend:latest 
 
       # ── ÉTAPE 2 : Build & Push du FRONTEND (Streamlit) ──
       - name: Build and push Streamlit Frontend
@@ -41,4 +41,4 @@ jobs:
           context: .
           file: ./frontend/Dockerfile 
           push: true
-          tags: silener-create/projetcertif-frontend:latest
+          tags: silener/projetcertif-frontend:latest
