@@ -1,6 +1,7 @@
-from fastapi import FastAPI, HTTPException, status, Query
-from pydantic import BaseModel, Field
-from typing import Dict, List, Optional, Any
+from fastapi import FastAPI, HTTPException, Query
+from pydantic import BaseModel
+from typing import Dict, Optional, Any
+from prometheus_fastapi_instrumentator import Instrumentator # type: ignore
 import pandas as pd
 import os
 import sys
@@ -11,9 +12,9 @@ if ROOT_DIR not in sys.path:
     sys.path.append(ROOT_DIR)
 
 # Imports des modules metiers
-from recommender import recommend, engineer_features, ACTIVITY_FEATURES
-from budget_categorizer import BudgetCategorizer
-from backend.database import (
+from recommender import recommend, engineer_features  # noqa: E402
+from budget_categorizer import BudgetCategorizer  # noqa: E402
+from backend.database import (  # noqa: E402
     init_db,
     add_favorite,
     remove_favorite,
@@ -25,7 +26,6 @@ from backend.database import (
     get_user_interests,
     register_user,
     login_user,
-    # ➕ Ajout des imports d'administration SQLAlchemy
     db_get_user_stats,
     db_get_all_users,
     db_delete_user,
@@ -35,6 +35,8 @@ from backend.database import (
 app = FastAPI(
     title="TravelMatch API", description="Backend de recommandation de destinations de voyage", version="1.0.0"
 )
+    # ── EXPOSE LES MÉTRIQUES POUR PROMETHEUS ──
+Instrumentator().instrument(app).expose(app)
 
 df_global: pd.DataFrame = None
 categorizer: BudgetCategorizer = None
@@ -44,12 +46,17 @@ categorizer: BudgetCategorizer = None
 def startup_event():
     global df_global, categorizer
     init_db()
+
+    print("✅ [STARTUP] Base de données initialisée (tables créées si manquantes).")
+
     DATA_PATH = os.path.join(ROOT_DIR, "DATA", "processed", "data_clean.csv")
     if not os.path.exists(DATA_PATH):
         raise FileNotFoundError(f"Fichier introuvable : {DATA_PATH}")
     df_raw = pd.read_csv(DATA_PATH)
     df_global = engineer_features(df_raw)
     categorizer = BudgetCategorizer(df_global, n_categories=4)
+
+    print("🤖 [STARTUP] Pipeline de feature engineering appliquée avec succès.")
 
 
 class UserLogin(BaseModel):
@@ -226,27 +233,31 @@ def get_admin_history():
     try:
         # 1. On récupère l'historique brut (qui contient les IDs ou les requêtes)
         results = db_get_admin_search_history()
-        
+
         if not results:
             print("🚨 [DIAGNOSTIC] La table search_history est vide.")
             return []
-            
+
         formatted_history = []
         for r in results:
             raw_query = r.get("query", "Inconnue")
             city_name = "Inconnue"
-            
+
             # 2. TRADUCTION DE L'ID EN NOM DE VILLE VRAIE
             # Si le résultat brut est un ID numérique (ex: 5 ou "5")
             if str(raw_query).isdigit() and df_global is not None:
                 city_id = int(raw_query)
                 # On cherche la ligne correspondante dans le fichier des destinations
                 # (Ajuste 'id' ou 'city' selon les colonnes réelles de ton df_global)
-                city_row = df_global[df_global['id'] == city_id] if 'id' in df_global.columns else pd.DataFrame()
-                
+                city_row = df_global[df_global["id"] == city_id] if "id" in df_global.columns else pd.DataFrame()
+
                 if not city_row.empty:
                     # On extrait le nom textuel de la ville
-                    city_col = "city" if "city" in df_global.columns else ("ville" if "ville" in df_global.columns else df_global.columns[0])
+                    city_col = (
+                        "city"
+                        if "city" in df_global.columns
+                        else ("ville" if "ville" in df_global.columns else df_global.columns[0])
+                    )
                     city_name = str(city_row.iloc[0][city_col])
                 else:
                     city_name = f"Destination n°{city_id}"
@@ -255,33 +266,41 @@ def get_admin_history():
                 city_name = str(raw_query)
 
             # 3. Envoi du dictionnaire propre au frontend
-            formatted_history.append({
-                "username": r.get("username", "Anonyme"),
-                "searched_at": r.get("searched_at", "Pas de date"),
-                "city": city_name,  # 👈 Contient maintenant le vrai nom ("Tokyo", "Paris"...) !
-                "month": str(r.get("month", "N/A")),
-                "query": "Filtres appliqués"
-            })
-            
+            formatted_history.append(
+                {
+                    "username": r.get("username", "Anonyme"),
+                    "searched_at": r.get("searched_at", "Pas de date"),
+                    "city": city_name,  # 👈 Contient maintenant le vrai nom ("Tokyo", "Paris"...) !
+                    "month": str(r.get("month", "N/A")),
+                    "query": "Filtres appliqués",
+                }
+            )
+
         print(f"✅ [DIAGNOSTIC] {len(formatted_history)} lignes traduites envoyées au panneau Admin.")
         return formatted_history
-        
+
     except Exception as e:
         print(f"❌ [DIAGNOSTIC] Erreur lors de la traduction des IDs villes : {str(e)}")
         return []
+
 
 @app.get("/api/admin/favorites/top")
 def admin_top_favorites():
     """Récupère le décompte global de toutes les villes mises en favoris."""
     from backend.database import get_session, Favorite
+
     session = get_session()
     try:
         from sqlalchemy import func
+
         # Compte le nombre de fois que chaque ville apparaît dans la table favorites
-        rows = session.query(Favorite.city, func.count(Favorite.id).label("total"))\
-                      .group_by(Favorite.city)\
-                      .order_by(func.count(Favorite.id).desc())\
-                      .limit(10).all()
+        rows = (
+            session.query(Favorite.city, func.count(Favorite.id).label("total"))
+            .group_by(Favorite.city)
+            .order_by(func.count(Favorite.id).desc())
+            .limit(10)
+            .all()
+        )
         return [{"city": r.city, "count": r.total} for r in rows]
     finally:
         session.close()

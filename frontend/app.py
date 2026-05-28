@@ -1,13 +1,12 @@
-import streamlit as st
+import streamlit as st # type: ignore
 import pandas as pd
-import numpy as np
-import plotly.graph_objects as go
-import plotly.express as px
-import folium
-from streamlit_folium import st_folium
+import plotly.graph_objects as go # type: ignore
+import plotly.express as px # type: ignore
+import folium # type: ignore
+from streamlit_folium import st_folium # type: ignore
 import sys
 import os
-import requests  # 👈 Permet de communiquer avec le serveur FastAPI
+import requests
 
 # Configuration du chemin racine (conservée pour charger les outils visuels si nécessaire)
 ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
@@ -23,8 +22,18 @@ from backend.utils import get_cached_images, display_image_carousel
 API_URL = os.getenv("API_URL", "http://localhost:8000")
 
 MONTH_NAMES = {
-    1: "Janvier", 2: "Février", 3: "Mars", 4: "Avril", 5: "Mai", 6: "Juin",
-    7: "Juillet", 8: "Août", 9: "Septembre", 10: "Octobre", 11: "Novembre", 12: "Décembre",
+    1: "Janvier",
+    2: "Février",
+    3: "Mars",
+    4: "Avril",
+    5: "Mai",
+    6: "Juin",
+    7: "Juillet",
+    8: "Août",
+    9: "Septembre",
+    10: "Octobre",
+    11: "Novembre",
+    12: "Décembre",
 }
 
 # ─────────────────────────────────────────────
@@ -141,8 +150,12 @@ def show_auth_page():
             cols = st.columns(3)
             interests = {}
             fields = [
-                ("nature", "🌿 Nature"), ("patrimoine", "🏛️ Patrimoine"), ("culture", "🎭 Culture"),
-                ("restaurant", "🍽️ Gastronomie"), ("nightlife", "🎉 Nightlife"), ("loisirs", "🎢 Loisirs"),
+                ("nature", "🌿 Nature"),
+                ("patrimoine", "🏛️ Patrimoine"),
+                ("culture", "🎭 Culture"),
+                ("restaurant", "🍽️ Gastronomie"),
+                ("nightlife", "🎉 Nightlife"),
+                ("loisirs", "🎢 Loisirs"),
             ]
             for i, (key, label) in enumerate(fields):
                 with cols[i % 3]:
@@ -198,8 +211,13 @@ def build_sidebar():
 
     st.sidebar.markdown('<div class="sidebar-section">🗺️ Type de destination</div>', unsafe_allow_html=True)
     cluster_options = {
-        "Pas de préférence": None, "🌿 Nature & Aventure": 0, "🏛️ Patrimoine & Histoire": 1,
-        "🎭 Culture & Arts": 2, "🌊 Détente & Plages": 3, "🏙️ Métropole Moderne": 4, "🎉 Fête & Nightlife": 5,
+        "Pas de préférence": None,
+        "🌿 Nature & Aventure": 0,
+        "🏛️ Patrimoine & Histoire": 1,
+        "🎭 Culture & Arts": 2,
+        "🌊 Détente & Plages": 3,
+        "🏙️ Métropole Moderne": 4,
+        "🎉 Fête & Nightlife": 5,
     }
     cluster_choice = st.sidebar.selectbox("Je cherche...", list(cluster_options.keys()), key="cluster_select")
     cluster_bonus = cluster_options[cluster_choice]
@@ -218,15 +236,21 @@ def build_sidebar():
 
     budget_options = {}
     for category_name, details in budget_info.items():
-        budget_options[f"{category_name} (~${details['revenu_median']:.0f}/jour, {details['num_cities']} villes)"] = category_name
+        budget_options[f"{category_name} (~${details['revenu_median']:.0f}/jour, {details['num_cities']} villes)"] = (
+            category_name
+        )
 
     if not budget_options:
         budget_options = {
-            "🎒 Budget serré": "🎒 Budget serré", "✈️ Moyen": "✈️ Moyen",
-            "🏨 Confortable": "🏨 Confortable", "💎 Luxe": "💎 Luxe",
+            "🎒 Budget serré": "🎒 Budget serré",
+            "✈️ Moyen": "✈️ Moyen",
+            "🏨 Confortable": "🏨 Confortable",
+            "💎 Luxe": "💎 Luxe",
         }
 
-    budget_label_with_info = st.sidebar.radio("Niveau de vie du pays", list(budget_options.keys()), index=1, key="budget_radio")
+    budget_label_with_info = st.sidebar.radio(
+        "Niveau de vie du pays", list(budget_options.keys()), index=1, key="budget_radio"
+    )
     budget_label = budget_options[budget_label_with_info]
 
     try:
@@ -259,18 +283,34 @@ def radar_chart(city_row: pd.Series, user_interests: dict, city_name: str):
     user_vals = [float(user_interests.get(k, 0)) for k in keys]
 
     fig = go.Figure()
-    fig.add_trace(go.Scatterpolar(
-        r=city_vals + [city_vals[0]], theta=categories + [categories[0]], fill="toself",
-        name=city_name, fillcolor="rgba(14,165,233,0.25)", line=dict(color="#0ea5e9", width=3),
-    ))
-    fig.add_trace(go.Scatterpolar(
-        r=user_vals + [user_vals[0]], theta=categories + [categories[0]], fill="toself",
-        name="Vos envies", fillcolor="rgba(245,158,11,0.0)", line=dict(color="#f59e0b", width=2, dash="dash"),
-    ))
+    fig.add_trace(
+        go.Scatterpolar(
+            r=city_vals + [city_vals[0]],
+            theta=categories + [categories[0]],
+            fill="toself",
+            name=city_name,
+            fillcolor="rgba(14,165,233,0.25)",
+            line=dict(color="#0ea5e9", width=3),
+        )
+    )
+    fig.add_trace(
+        go.Scatterpolar(
+            r=user_vals + [user_vals[0]],
+            theta=categories + [categories[0]],
+            fill="toself",
+            name="Vos envies",
+            fillcolor="rgba(245,158,11,0.0)",
+            line=dict(color="#f59e0b", width=2, dash="dash"),
+        )
+    )
     fig.update_layout(
         polar=dict(radialaxis=dict(visible=True, range=[0, 5], tickvals=[1, 2, 3, 4, 5], tickfont=dict(size=9))),
-        showlegend=True, legend=dict(orientation="h", y=-0.15), height=300,
-        margin=dict(t=20, b=40, l=20, r=20), paper_bgcolor="rgba(0,0,0,0)", font=dict(family="Outfit"),
+        showlegend=True,
+        legend=dict(orientation="h", y=-0.15),
+        height=300,
+        margin=dict(t=20, b=40, l=20, r=20),
+        paper_bgcolor="rgba(0,0,0,0)",
+        font=dict(family="Outfit"),
     )
     return fig
 
@@ -278,8 +318,21 @@ def radar_chart(city_row: pd.Series, user_interests: dict, city_name: str):
 def build_map(results: pd.DataFrame, city_col: str):
     if "latitude" not in results.columns or "longitude" not in results.columns:
         return None
-    m = folium.Map(location=[results["latitude"].mean(), results["longitude"].mean()], zoom_start=2, tiles="CartoDB positron")
-    colors = ["#0ea5e9", "#6366f1", "#ec4899", "#f59e0b", "#10b981", "#3b82f6", "#ef4444", "#84cc16", "#f97316", "#06b6d4"]
+    m = folium.Map(
+        location=[results["latitude"].mean(), results["longitude"].mean()], zoom_start=2, tiles="CartoDB positron"
+    )
+    colors = [
+        "#0ea5e9",
+        "#6366f1",
+        "#ec4899",
+        "#f59e0b",
+        "#10b981",
+        "#3b82f6",
+        "#ef4444",
+        "#84cc16",
+        "#f97316",
+        "#06b6d4",
+    ]
     for i, row in results.iterrows():
         if pd.notna(row.get("latitude")) and pd.notna(row.get("longitude")):
             city = row.get(city_col, f"Ville {i+1}")
@@ -288,8 +341,14 @@ def build_map(results: pd.DataFrame, city_col: str):
             folium.CircleMarker(
                 location=[row["latitude"], row["longitude"]],
                 radius=8 + (10 - min(row.get("rang", 10), 10)) * 1.2,
-                color=color, fill=True, fill_color=color, fill_opacity=0.75,
-                popup=folium.Popup(f"<b>#{row['rang']} {city}</b><br>{row.get('cluster_label','')}<br><b style='color:{color}'>{score:.0f}%</b> match<br>🌡️ {row.get('temp_avg',0):.1f}°C", max_width=180),
+                color=color,
+                fill=True,
+                fill_color=color,
+                fill_opacity=0.75,
+                popup=folium.Popup(
+                    f"<b>#{row['rang']} {city}</b><br>{row.get('cluster_label','')}<br><b style='color:{color}'>{score:.0f}%</b> match<br>🌡️ {row.get('temp_avg',0):.1f}°C",
+                    max_width=180,
+                ),
                 tooltip=f"#{row['rang']} {city} — {score:.0f}%",
             ).add_to(m)
     return m
@@ -309,9 +368,12 @@ def show_profile_tab(user: dict):
             current = {}
 
         fields = [
-            ("nature", "🌿 Nature & Randonnée"), ("patrimoine", "🏛️ Patrimoine & Histoire"),
-            ("culture", "🎭 Culture & Arts"), ("restaurant", "🍽️ Gastronomie"),
-            ("nightlife", "🎉 Vie nocturne"), ("loisirs", "🎢 Loisirs"),
+            ("nature", "🌿 Nature & Randonnée"),
+            ("patrimoine", "🏛️ Patrimoine & Histoire"),
+            ("culture", "🎭 Culture & Arts"),
+            ("restaurant", "🍽️ Gastronomie"),
+            ("nightlife", "🎉 Vie nocturne"),
+            ("loisirs", "🎢 Loisirs"),
         ]
         cols = st.columns(3)
         new_interests = {}
@@ -342,12 +404,17 @@ def show_profile_tab(user: dict):
                 c1, c2, c3 = st.columns([3, 1, 1])
                 with c1:
                     st.markdown(f"**{fav['city']}** — {fav.get('country','')}")
-                    st.caption(f"{fav.get('cluster_label','')} · {MONTH_NAMES.get(int(fav['month']), fav['month'])} · 🌡️ {fav.get('temp_avg',0):.1f}°C")
+                    st.caption(
+                        f"{fav.get('cluster_label','')} · {MONTH_NAMES.get(int(fav['month']), fav['month'])} · 🌡️ {fav.get('temp_avg',0):.1f}°C"
+                    )
                 with c2:
                     st.metric("Score", f"{fav['score_pct']:.0f}%")
                 with c3:
                     if st.button("🗑️", key=f"del_fav_{fav['id']}"):
-                        requests.delete(f"{API_URL}/favorites", json={"user_id": user["id"], "city": fav["city"], "month": int(fav["month"])})
+                        requests.delete(
+                            f"{API_URL}/favorites",
+                            json={"user_id": user["id"], "city": fav["city"], "month": int(fav["month"])},
+                        )
                         st.rerun()
                 st.divider()
 
@@ -394,7 +461,14 @@ def main():
         try:
             st.session_state["user_interests"] = requests.get(f"{API_URL}/users/{user['id']}/interests").json()
         except Exception:
-            st.session_state["user_interests"] = {"nature": 3, "patrimoine": 3, "culture": 3, "restaurant": 3, "nightlife": 3, "loisirs": 3}
+            st.session_state["user_interests"] = {
+                "nature": 3,
+                "patrimoine": 3,
+                "culture": 3,
+                "restaurant": 3,
+                "nightlife": 3,
+                "loisirs": 3,
+            }
 
     if user and user.get("is_admin", 0) == 1:
         st.sidebar.markdown("---")
@@ -462,7 +536,9 @@ def main():
 
     # État initial sans recherche
     if results.empty:
-        st.info("👋 Bienvenue ! Ajustez vos filtres à gauche, puis cliquez sur le bouton ci-dessus pour lancer votre recherche.")
+        st.info(
+            "👋 Bienvenue ! Ajustez vos filtres à gauche, puis cliquez sur le bouton ci-dessus pour lancer votre recherche."
+        )
         return
 
     # Détection dynamique du nom de colonne Ville

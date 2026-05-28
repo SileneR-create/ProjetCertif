@@ -17,8 +17,10 @@ API_URL = os.getenv("API_URL", "http://localhost:8000")
 #  VÉRIFICATION ADMIN
 # ─────────────────────────────────────────────
 
+
 def is_admin(user: dict) -> bool:
     return bool(user.get("is_admin", 0))
+
 
 def require_admin(user: dict) -> bool:
     if not is_admin(user):
@@ -26,9 +28,11 @@ def require_admin(user: dict) -> bool:
         return False
     return True
 
+
 # ─────────────────────────────────────────────
 #  REQUÊTES API
 # ─────────────────────────────────────────────
+
 
 def get_user_stats() -> dict:
     try:
@@ -39,6 +43,7 @@ def get_user_stats() -> dict:
     except Exception:
         return {"total_users": 0, "total_admins": 0}
 
+
 def get_all_users() -> list:
     try:
         response = requests.get(f"{API_URL}/api/admin/users")
@@ -48,12 +53,14 @@ def get_all_users() -> list:
     except Exception:
         return []
 
+
 def delete_user(user_id: int) -> bool:
     try:
         response = requests.delete(f"{API_URL}/api/admin/users/{user_id}")
         return response.status_code == 200
     except Exception:
         return False
+
 
 def get_admin_search_history() -> list:
     try:
@@ -63,6 +70,7 @@ def get_admin_search_history() -> list:
         return []
     except Exception:
         return []
+
 
 def get_top_favorites() -> list:
     """Nouvelle requête pour récupérer le classement des favoris globaux."""
@@ -74,9 +82,11 @@ def get_top_favorites() -> list:
     except Exception:
         return []
 
+
 # ─────────────────────────────────────────────
 #  INTERFACE GRAPHIQUE (UI)
 # ─────────────────────────────────────────────
+
 
 def show_admin_page():
     current_user = st.session_state.get("user")
@@ -89,17 +99,17 @@ def show_admin_page():
     # Chargement des données historiques
     history_data = get_admin_search_history()
     df_history = pd.DataFrame(history_data)
-    
+
     fav_data = get_top_favorites()
     df_fav = pd.DataFrame(fav_data)
-    
+
     # ─── SECTION 1 : VRAIS KPIS BUSINESS ───────────────────
     stats = get_user_stats()
-    
+
     total_searches = len(df_history) if not df_history.empty else 0
     searches_24h = 0
     total_saved_favs = df_fav["count"].sum() if not df_fav.empty else 0
-    
+
     if total_searches > 0 and "searched_at" in df_history.columns:
         try:
             df_history["datetime"] = pd.to_datetime(df_history["searched_at"])
@@ -127,12 +137,12 @@ def show_admin_page():
     with tab_analytics:
         # --- BLOC 1 : LES INTENTIONS (RECHERCHES VS FAVORIS) ---
         st.subheader("💡 Analyse des Tendances de Voyage")
-        
+
         col_left, col_right = st.columns(2)
-        
+
         with col_left:
             st.markdown("#### 🗺️ Top des résultats d'affichage (Visibilité)")
-            
+
             if df_history.empty:
                 st.info("Aucune donnée d'affichage enregistrée.")
             else:
@@ -145,13 +155,13 @@ def show_admin_page():
                     # Sécurité si l'API utilise encore l'ancienne colonne 'query'
                     df_counts = df_history["query"].value_counts().reset_index()
                     df_counts.columns = ["Ville", "Nombre d'affichages"]
-                
+
                 # En force le type en texte pour éviter les bugs d'affichage de Plotly
                 df_counts["Ville"] = df_counts["Ville"].astype(str)
-                
+
                 # 2. On garde le Top 8 pour la clarté visuelle
                 df_top_visible = df_counts.head(8)
-                
+
                 # 3. Construction du Bar Chart Vertical épuré
                 fig_top_results = px.bar(
                     df_top_visible,
@@ -159,23 +169,20 @@ def show_admin_page():
                     y="Nombre d'affichages",
                     color="Ville",
                     text="Nombre d'affichages",  # Affiche le score en gros au-dessus de la barre
-                    color_discrete_sequence=px.colors.qualitative.Safe
+                    color_discrete_sequence=px.colors.qualitative.Safe,
                 )
-                
+
                 # 4. Nettoyage du design pour une interprétation immédiate
-                fig_top_results.update_traces(
-                    textposition='outside',
-                    hovertemplate="<b>%{x}</b><br>Affichages : %{y}"
-                )
-                
+                fig_top_results.update_traces(textposition="outside", hovertemplate="<b>%{x}</b><br>Affichages : %{y}")
+
                 fig_top_results.update_layout(
                     showlegend=False,  # Supprime la légende inutile à droite
                     xaxis_title=None,  # Supprime le titre d'axe "Ville" sous les noms
                     yaxis_title="Nombre de fois proposée",
                     margin=dict(t=10, b=10, l=10, r=10),
-                    height=380
+                    height=380,
                 )
-                
+
                 st.plotly_chart(fig_top_results, use_container_width=True)
 
         with col_right:
@@ -189,29 +196,27 @@ def show_admin_page():
                     df_fav.head(8),
                     x="Nombre d'ajouts",
                     y="Ville",
-                    orientation='h',
+                    orientation="h",
                     color="Nombre d'ajouts",
-                    color_continuous_scale="Viridis"
+                    color_continuous_scale="Viridis",
                 )
                 # Trier pour avoir le plus grand en haut
-                fig_bar.update_layout(yaxis={'categoryorder':'total ascending'}, coloraxis_showscale=False, margin=dict(t=10, b=10, l=10, r=10))
+                fig_bar.update_layout(
+                    yaxis={"categoryorder": "total ascending"},
+                    coloraxis_showscale=False,
+                    margin=dict(t=10, b=10, l=10, r=10),
+                )
                 st.plotly_chart(fig_bar, use_container_width=True)
 
         st.markdown("---")
-        
+
         # --- BLOC 2 : VOLUMÉTRIE TEMPORELLE ---
         if not df_history.empty and "datetime" in df_history.columns:
             st.markdown("### 📈 Évolution du volume de requêtes")
             df_history["date"] = df_history["datetime"].dt.date
             df_timeline = df_history.groupby("date").size().reset_index(name="Nombre de requêtes")
-            
-            fig_line = px.line(
-                df_timeline, 
-                x="date", 
-                y="Nombre de requêtes",
-                markers=True,
-                line_shape="spline"
-            )
+
+            fig_line = px.line(df_timeline, x="date", y="Nombre de requêtes", markers=True, line_shape="spline")
             st.plotly_chart(fig_line, use_container_width=True)
 
         # --- BLOC 3 : LE TABLEAU DE BORD BRUT ---
