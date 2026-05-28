@@ -20,22 +20,11 @@ from frontend.auth import show_user_widget, is_logged_in, get_current_user
 from backend.utils import get_cached_images, display_image_carousel
 
 # ── CONFIGURATION DE L'URL DE L'API ──
-# En local, utilise le port 8000. La pipeline CI/CD l'écrasera en prod via les variables d'environnement.
 API_URL = os.getenv("API_URL", "http://localhost:8000")
 
 MONTH_NAMES = {
-    1: "Janvier",
-    2: "Février",
-    3: "Mars",
-    4: "Avril",
-    5: "Mai",
-    6: "Juin",
-    7: "Juillet",
-    8: "Août",
-    9: "Septembre",
-    10: "Octobre",
-    11: "Novembre",
-    12: "Décembre",
+    1: "Janvier", 2: "Février", 3: "Mars", 4: "Avril", 5: "Mai", 6: "Juin",
+    7: "Juillet", 8: "Août", 9: "Septembre", 10: "Octobre", 11: "Novembre", 12: "Décembre",
 }
 
 # ─────────────────────────────────────────────
@@ -49,7 +38,7 @@ st.set_page_config(
 )
 
 # ─────────────────────────────────────────────
-#  CSS (Conservé à l'identique)
+#  CSS
 # ─────────────────────────────────────────────
 st.markdown(
     """
@@ -97,7 +86,7 @@ html, body, [class*="css"] { font-family: 'Outfit', sans-serif; }
 
 
 # ─────────────────────────────────────────────
-#  PAGE INSCRIPTION & CONNEXION VIA API
+#  PAGE INSCRIPTION & CONNEXION
 # ─────────────────────────────────────────────
 def show_auth_page():
     st.markdown(
@@ -114,7 +103,6 @@ def show_auth_page():
 
     tab_login, tab_register = st.tabs(["🔑 Connexion", "📝 Créer un compte"])
 
-    # ── CONNEXION ──
     with tab_login:
         with st.form("login_form"):
             st.markdown("#### Bon retour 👋")
@@ -125,7 +113,6 @@ def show_auth_page():
                     st.error("Remplissez tous les champs.")
                 else:
                     try:
-                        # Appel API
                         response = requests.post(
                             f"{API_URL}/auth/login", json={"username": username, "password": password}
                         )
@@ -137,7 +124,6 @@ def show_auth_page():
                     except requests.exceptions.ConnectionError:
                         st.error("Impossible de joindre le backend FastAPI.")
 
-    # ── INSCRIPTION ──
     with tab_register:
         with st.form("register_form"):
             st.markdown("#### Créer mon compte")
@@ -155,12 +141,8 @@ def show_auth_page():
             cols = st.columns(3)
             interests = {}
             fields = [
-                ("nature", "🌿 Nature"),
-                ("patrimoine", "🏛️ Patrimoine"),
-                ("culture", "🎭 Culture"),
-                ("restaurant", "🍽️ Gastronomie"),
-                ("nightlife", "🎉 Nightlife"),
-                ("loisirs", "🎢 Loisirs"),
+                ("nature", "🌿 Nature"), ("patrimoine", "🏛️ Patrimoine"), ("culture", "🎭 Culture"),
+                ("restaurant", "🍽️ Gastronomie"), ("nightlife", "🎉 Nightlife"), ("loisirs", "🎢 Loisirs"),
             ]
             for i, (key, label) in enumerate(fields):
                 with cols[i % 3]:
@@ -185,7 +167,6 @@ def show_auth_page():
                         }
                         response = requests.post(f"{API_URL}/auth/register", json=payload)
                         if response.status_code == 200:
-                            # Connexion automatique immédiate après inscription
                             login_res = requests.post(
                                 f"{API_URL}/auth/login", json={"username": new_username, "password": new_password}
                             )
@@ -199,46 +180,36 @@ def show_auth_page():
 
 
 # ─────────────────────────────────────────────
-#  SIDEBAR VIA API
+#  SIDEBAR
 # ─────────────────────────────────────────────
 def build_sidebar():
     st.sidebar.markdown("## ✈️ TravelMatch")
     st.sidebar.markdown("*Affinez votre recherche*")
     st.sidebar.markdown("---")
 
-    # ── MOIS ──
     st.sidebar.markdown('<div class="sidebar-section">🗓️ Période</div>', unsafe_allow_html=True)
     month_name = st.sidebar.selectbox(
         "Mois du séjour", list(MONTH_NAMES.values()), index=st.session_state.get("month_index", 6), key="month_select"
     )
     month = [k for k, v in MONTH_NAMES.items() if v == month_name][0]
 
-    # ── CLIMAT ──
     st.sidebar.markdown('<div class="sidebar-section">🌡️ Climat</div>', unsafe_allow_html=True)
     temp_avg = st.sidebar.slider("Température souhaitée (°C)", -10, 40, key="temp_slider")
 
-    # ── TYPE ──
     st.sidebar.markdown('<div class="sidebar-section">🗺️ Type de destination</div>', unsafe_allow_html=True)
     cluster_options = {
-        "Pas de préférence": None,
-        "🌿 Nature & Aventure": 0,
-        "🏛️ Patrimoine & Histoire": 1,
-        "🎭 Culture & Arts": 2,
-        "🌊 Détente & Plages": 3,
-        "🏙️ Métropole Moderne": 4,
-        "🎉 Fête & Nightlife": 5,
+        "Pas de préférence": None, "🌿 Nature & Aventure": 0, "🏛️ Patrimoine & Histoire": 1,
+        "🎭 Culture & Arts": 2, "🌊 Détente & Plages": 3, "🏙️ Métropole Moderne": 4, "🎉 Fête & Nightlife": 5,
     }
     cluster_choice = st.sidebar.selectbox("Je cherche...", list(cluster_options.keys()), key="cluster_select")
     cluster_bonus = cluster_options[cluster_choice]
 
-    # ── ACCESSIBILITÉ ──
     st.sidebar.markdown('<div class="sidebar-section">🏗️ Accéssibilité</div>', unsafe_allow_html=True)
     indice_electricite = st.sidebar.slider("Électricité accessible (% pop)", 0, 100, 80, key="slider_electricite")
     indice_internet = st.sidebar.slider("Internet accessible (% pop)", 0, 100, 70, key="slider_internet")
     indice_eau = st.sidebar.slider("Eau potable accessible (% pop)", 0, 100, 85, key="slider_eau")
     indice_medecins = st.sidebar.slider("Médecins (pour 1000 habitants)", 0.0, 5.0, 2.0, key="slider_medecins")
 
-    # ── BUDGET (Récupéré depuis FastAPI) ──
     st.sidebar.markdown('<div class="sidebar-section">💰 Budget sur place</div>', unsafe_allow_html=True)
     try:
         budget_info = requests.get(f"{API_URL}/budget/info").json()
@@ -247,21 +218,15 @@ def build_sidebar():
 
     budget_options = {}
     for category_name, details in budget_info.items():
-        budget_options[f"{category_name} (~${details['revenu_median']:.0f}/jour, {details['num_cities']} villes)"] = (
-            category_name
-        )
+        budget_options[f"{category_name} (~${details['revenu_median']:.0f}/jour, {details['num_cities']} villes)"] = category_name
 
     if not budget_options:
         budget_options = {
-            "🎒 Budget serré": "🎒 Budget serré",
-            "✈️ Moyen": "✈️ Moyen",
-            "🏨 Confortable": "🏨 Confortable",
-            "💎 Luxe": "💎 Luxe",
+            "🎒 Budget serré": "🎒 Budget serré", "✈️ Moyen": "✈️ Moyen",
+            "🏨 Confortable": "🏨 Confortable", "💎 Luxe": "💎 Luxe",
         }
 
-    budget_label_with_info = st.sidebar.radio(
-        "Niveau de vie du pays", list(budget_options.keys()), index=1, key="budget_radio"
-    )
+    budget_label_with_info = st.sidebar.radio("Niveau de vie du pays", list(budget_options.keys()), index=1, key="budget_radio")
     budget_label = budget_options[budget_label_with_info]
 
     try:
@@ -285,7 +250,7 @@ def build_sidebar():
 
 
 # ─────────────────────────────────────────────
-#  VISUELS GRAPHES & MAP (Conservé complet)
+#  VISUELS GRAPHES & MAP
 # ─────────────────────────────────────────────
 def radar_chart(city_row: pd.Series, user_interests: dict, city_name: str):
     categories = ["Nature", "Patrimoine", "Culture", "Restaurant", "Nightlife", "Loisirs"]
@@ -294,34 +259,18 @@ def radar_chart(city_row: pd.Series, user_interests: dict, city_name: str):
     user_vals = [float(user_interests.get(k, 0)) for k in keys]
 
     fig = go.Figure()
-    fig.add_trace(
-        go.Scatterpolar(
-            r=city_vals + [city_vals[0]],
-            theta=categories + [categories[0]],
-            fill="toself",
-            name=city_name,
-            fillcolor="rgba(14,165,233,0.25)",
-            line=dict(color="#0ea5e9", width=3),
-        )
-    )
-    fig.add_trace(
-        go.Scatterpolar(
-            r=user_vals + [user_vals[0]],
-            theta=categories + [categories[0]],
-            fill="toself",
-            name="Vos envies",
-            fillcolor="rgba(245,158,11,0.0)",
-            line=dict(color="#f59e0b", width=2, dash="dash"),
-        )
-    )
+    fig.add_trace(go.Scatterpolar(
+        r=city_vals + [city_vals[0]], theta=categories + [categories[0]], fill="toself",
+        name=city_name, fillcolor="rgba(14,165,233,0.25)", line=dict(color="#0ea5e9", width=3),
+    ))
+    fig.add_trace(go.Scatterpolar(
+        r=user_vals + [user_vals[0]], theta=categories + [categories[0]], fill="toself",
+        name="Vos envies", fillcolor="rgba(245,158,11,0.0)", line=dict(color="#f59e0b", width=2, dash="dash"),
+    ))
     fig.update_layout(
         polar=dict(radialaxis=dict(visible=True, range=[0, 5], tickvals=[1, 2, 3, 4, 5], tickfont=dict(size=9))),
-        showlegend=True,
-        legend=dict(orientation="h", y=-0.15),
-        height=300,
-        margin=dict(t=20, b=40, l=20, r=20),
-        paper_bgcolor="rgba(0,0,0,0)",
-        font=dict(family="Outfit"),
+        showlegend=True, legend=dict(orientation="h", y=-0.15), height=300,
+        margin=dict(t=20, b=40, l=20, r=20), paper_bgcolor="rgba(0,0,0,0)", font=dict(family="Outfit"),
     )
     return fig
 
@@ -329,21 +278,8 @@ def radar_chart(city_row: pd.Series, user_interests: dict, city_name: str):
 def build_map(results: pd.DataFrame, city_col: str):
     if "latitude" not in results.columns or "longitude" not in results.columns:
         return None
-    m = folium.Map(
-        location=[results["latitude"].mean(), results["longitude"].mean()], zoom_start=2, tiles="CartoDB positron"
-    )
-    colors = [
-        "#0ea5e9",
-        "#6366f1",
-        "#ec4899",
-        "#f59e0b",
-        "#10b981",
-        "#3b82f6",
-        "#ef4444",
-        "#84cc16",
-        "#f97316",
-        "#06b6d4",
-    ]
+    m = folium.Map(location=[results["latitude"].mean(), results["longitude"].mean()], zoom_start=2, tiles="CartoDB positron")
+    colors = ["#0ea5e9", "#6366f1", "#ec4899", "#f59e0b", "#10b981", "#3b82f6", "#ef4444", "#84cc16", "#f97316", "#06b6d4"]
     for i, row in results.iterrows():
         if pd.notna(row.get("latitude")) and pd.notna(row.get("longitude")):
             city = row.get(city_col, f"Ville {i+1}")
@@ -352,26 +288,19 @@ def build_map(results: pd.DataFrame, city_col: str):
             folium.CircleMarker(
                 location=[row["latitude"], row["longitude"]],
                 radius=8 + (10 - min(row.get("rang", 10), 10)) * 1.2,
-                color=color,
-                fill=True,
-                fill_color=color,
-                fill_opacity=0.75,
-                popup=folium.Popup(
-                    f"<b>#{row['rang']} {city}</b><br>{row.get('cluster_label','')}<br><b style='color:{color}'>{score:.0f}%</b> match<br>🌡️ {row.get('temp_avg',0):.1f}°C",
-                    max_width=180,
-                ),
+                color=color, fill=True, fill_color=color, fill_opacity=0.75,
+                popup=folium.Popup(f"<b>#{row['rang']} {city}</b><br>{row.get('cluster_label','')}<br><b style='color:{color}'>{score:.0f}%</b> match<br>🌡️ {row.get('temp_avg',0):.1f}°C", max_width=180),
                 tooltip=f"#{row['rang']} {city} — {score:.0f}%",
             ).add_to(m)
     return m
 
 
 # ─────────────────────────────────────────────
-#  ONGLET PROFIL COMPLET VIA API
+#  ONGLET PROFIL COMPLET
 # ─────────────────────────────────────────────
 def show_profile_tab(user: dict):
     tab_interests, tab_favs, tab_history = st.tabs(["⭐ Mes centres d'intérêt", "❤️ Mes favoris", "🕐 Historique"])
 
-    # ── INTÉRÊTS ──
     with tab_interests:
         st.markdown("#### Modifiez vos centres d'intérêt")
         try:
@@ -380,12 +309,9 @@ def show_profile_tab(user: dict):
             current = {}
 
         fields = [
-            ("nature", "🌿 Nature & Randonnée"),
-            ("patrimoine", "🏛️ Patrimoine & Histoire"),
-            ("culture", "🎭 Culture & Arts"),
-            ("restaurant", "🍽️ Gastronomie"),
-            ("nightlife", "🎉 Vie nocturne"),
-            ("loisirs", "🎢 Loisirs"),
+            ("nature", "🌿 Nature & Randonnée"), ("patrimoine", "🏛️ Patrimoine & Histoire"),
+            ("culture", "🎭 Culture & Arts"), ("restaurant", "🍽️ Gastronomie"),
+            ("nightlife", "🎉 Vie nocturne"), ("loisirs", "🎢 Loisirs"),
         ]
         cols = st.columns(3)
         new_interests = {}
@@ -402,7 +328,6 @@ def show_profile_tab(user: dict):
             st.success("✅ Centres d'intérêt mis à jour !")
             st.rerun()
 
-    # ── FAVORIS ──
     with tab_favs:
         try:
             favs = requests.get(f"{API_URL}/favorites", params={"user_id": user["id"]}).json()
@@ -417,21 +342,15 @@ def show_profile_tab(user: dict):
                 c1, c2, c3 = st.columns([3, 1, 1])
                 with c1:
                     st.markdown(f"**{fav['city']}** — {fav.get('country','')}")
-                    st.caption(
-                        f"{fav.get('cluster_label','')} · {MONTH_NAMES.get(int(fav['month']), fav['month'])} · 🌡️ {fav.get('temp_avg',0):.1f}°C"
-                    )
+                    st.caption(f"{fav.get('cluster_label','')} · {MONTH_NAMES.get(int(fav['month']), fav['month'])} · 🌡️ {fav.get('temp_avg',0):.1f}°C")
                 with c2:
                     st.metric("Score", f"{fav['score_pct']:.0f}%")
                 with c3:
                     if st.button("🗑️", key=f"del_fav_{fav['id']}"):
-                        requests.delete(
-                            f"{API_URL}/favorites",
-                            json={"user_id": user["id"], "city": fav["city"], "month": int(fav["month"])},
-                        )
+                        requests.delete(f"{API_URL}/favorites", json={"user_id": user["id"], "city": fav["city"], "month": int(fav["month"])})
                         st.rerun()
                 st.divider()
 
-    # ── HISTORIQUE ──
     with tab_history:
         try:
             history = requests.get(f"{API_URL}/history", params={"user_id": user["id"], "limit": 15}).json()
@@ -471,26 +390,29 @@ def main():
     user = get_current_user()
     show_user_widget()
 
-    # Charger les centres d'intérêt en session depuis l'API si pas présent
     if "user_interests" not in st.session_state:
         try:
             st.session_state["user_interests"] = requests.get(f"{API_URL}/users/{user['id']}/interests").json()
         except Exception:
-            st.session_state["user_interests"] = {
-                "nature": 3,
-                "patrimoine": 3,
-                "culture": 3,
-                "restaurant": 3,
-                "nightlife": 3,
-                "loisirs": 3,
-            }
+            st.session_state["user_interests"] = {"nature": 3, "patrimoine": 3, "culture": 3, "restaurant": 3, "nightlife": 3, "loisirs": 3}
+
+    if user and user.get("is_admin", 0) == 1:
+        st.sidebar.markdown("---")
+        st.sidebar.subheader("⚙️ Modération")
+
+        if st.session_state.get("page", "app") == "app":
+            if st.sidebar.button("🛠️ Ouvrir le Panneau Admin", use_container_width=True, type="secondary"):
+                st.session_state["page"] = "admin"
+                st.rerun()
 
     page = st.session_state.get("page", "app")
+
     if page == "admin":
-        if st.sidebar.button("← Retour à l'app", use_container_width=True):
+        if st.sidebar.button("← Retour à l'app", use_container_width=True, type="primary"):
             st.session_state["page"] = "app"
             st.rerun()
-        show_admin_page(user)
+
+        show_admin_page()
         return
 
     user_interests = st.session_state["user_interests"]
@@ -501,32 +423,46 @@ def main():
     # Titres Visuels
     st.markdown('<div class="hero-title">Votre destination<br><i>idéale</i> vous attend.</div>', unsafe_allow_html=True)
     st.markdown(
-        '<div class="hero-sub">Affinez vos critères dans la barre latérale — vos centres d\'intérêt sont déjà pris en compte.</div>',
+        '<div class="hero-sub">Ajustez vos critères dans la barre latérale à gauche puis lancez la recherche.</div>',
         unsafe_allow_html=True,
     )
 
-    # ── APPEL RECOMMANDATION VIA FASTAPI ──
-    with st.spinner(f"🔍 Recherche pour {MONTH_NAMES[month]}…"):
-        payload = {
-            "month": month,
-            "user_id": user["id"],
-            "top_n": top_n,
-            "cluster_bonus": cluster_bonus,
-            "prefs": prefs,
-        }
-        try:
-            response = requests.post(f"{API_URL}/recommendations", json=payload)
-            if response.status_code == 200:
-                results = pd.DataFrame(response.json())
-            else:
-                st.error(f"Erreur du serveur : {response.json().get('detail', 'Inconnue')}")
-                return
-        except requests.exceptions.ConnectionError:
-            st.error("❌ Impossible de contacter le serveur FastAPI. Est-il démarré ?")
-            return
+    # Initialisation de la structure des résultats
+    results = pd.DataFrame()
 
+    # ── LE BOUTON DE RECHERCHE ──
+    if st.button("🔍 Lancer la recherche de destinations", type="primary", use_container_width=True):
+        with st.spinner(f"🔍 Recherche pour {MONTH_NAMES[month]}…"):
+            payload = {
+                "month": month,
+                "user_id": user["id"],
+                "top_n": top_n,
+                "cluster_bonus": cluster_bonus,
+                "prefs": prefs,
+            }
+            try:
+                response = requests.post(f"{API_URL}/recommendations", json=payload)
+                if response.status_code == 200:
+                    data_json = response.json()
+                    results = pd.DataFrame(data_json)
+                    # Sauvegarde en session pour persistance sur l'UI distant
+                    st.session_state["last_results"] = data_json
+                    st.session_state["last_month"] = month
+                else:
+                    st.error(f"Erreur du serveur : {response.json().get('detail', 'Inconnue')}")
+                    return
+            except requests.exceptions.ConnectionError:
+                st.error("❌ Impossible de contacter le serveur FastAPI. Est-il démarré ?")
+                return
+    else:
+        # Si aucun clic mais qu'une recherche a déjà eu lieu, on maintient l'affichage
+        if "last_results" in st.session_state:
+            results = pd.DataFrame(st.session_state["last_results"])
+            month = st.session_state["last_month"]
+
+    # État initial sans recherche
     if results.empty:
-        st.error("Aucun résultat.")
+        st.info("👋 Bienvenue ! Ajustez vos filtres à gauche, puis cliquez sur le bouton ci-dessus pour lancer votre recherche.")
         return
 
     # Détection dynamique du nom de colonne Ville
@@ -572,7 +508,6 @@ def main():
             dollars = row.get("Revenu moyen par habitant ($/jour)", None)
             country = row.get("country", "")
 
-            # Appel API pour vérifier le favori unitaire
             try:
                 fav_check = requests.get(
                     f"{API_URL}/favorites/check", params={"user_id": user["id"], "city": city_name, "month": month}

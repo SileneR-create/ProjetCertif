@@ -127,14 +127,14 @@ def update_api_user_interests(user_id: int, interests: Dict[str, int]):
 def get_budget_info():
     if categorizer is None:
         raise HTTPException(status_code=503, detail="Service indisponible")
-    return categorizer.get_category_stats()
+    return categorizer.get_category_info()
 
 
 @app.get("/budget/map-value")
 def get_budget_map_value(label: str = Query(...)):
     if categorizer is None:
         return 1
-    return categorizer.budget_map.get(label, 1)
+    return categorizer.get_budget_map.get(label, 1)
 
 
 @app.post("/recommendations")
@@ -154,7 +154,7 @@ def get_recommendations(req: RecommendRequest):
             cluster_bonus_id=req.cluster_bonus,
         )
         if not results_df.empty:
-            city_col = "Ville" if "Ville" in results_df.columns else results_df.columns[0]
+            city_col = "city" if "city" in results_df.columns else results_df.columns[0]
             top_result = results_df.iloc[0][city_col]
             save_search(req.user_id, req.month, req.prefs, str(top_result))
         return results_df.to_dict(orient="records")
@@ -199,6 +199,7 @@ def get_api_history(user_id: int, limit: int = 15):
 # ➕ NOUVELLES ROUTES POUR LE PANNEAU D'ADMINISTRATION
 # ─────────────────────────────────────────────────────────
 
+
 @app.get("/api/admin/stats")
 def admin_stats():
     """Renvoie le nombre global d'utilisateurs et d'admins."""
@@ -221,6 +222,66 @@ def admin_delete(user_id: int):
 
 
 @app.get("/api/admin/history")
-def admin_history():
-    """Renvoie l'historique complet des recherches de l'application."""
-    return db_get_admin_search_history()
+def get_admin_history():
+    try:
+        # 1. On récupère l'historique brut (qui contient les IDs ou les requêtes)
+        results = db_get_admin_search_history()
+        
+        if not results:
+            print("🚨 [DIAGNOSTIC] La table search_history est vide.")
+            return []
+            
+        formatted_history = []
+        for r in results:
+            raw_query = r.get("query", "Inconnue")
+            city_name = "Inconnue"
+            
+            # 2. TRADUCTION DE L'ID EN NOM DE VILLE VRAIE
+            # Si le résultat brut est un ID numérique (ex: 5 ou "5")
+            if str(raw_query).isdigit() and df_global is not None:
+                city_id = int(raw_query)
+                # On cherche la ligne correspondante dans le fichier des destinations
+                # (Ajuste 'id' ou 'city' selon les colonnes réelles de ton df_global)
+                city_row = df_global[df_global['id'] == city_id] if 'id' in df_global.columns else pd.DataFrame()
+                
+                if not city_row.empty:
+                    # On extrait le nom textuel de la ville
+                    city_col = "city" if "city" in df_global.columns else ("ville" if "ville" in df_global.columns else df_global.columns[0])
+                    city_name = str(city_row.iloc[0][city_col])
+                else:
+                    city_name = f"Destination n°{city_id}"
+            else:
+                # Si ce n'était pas un ID mais déjà du texte, on le garde tel quel
+                city_name = str(raw_query)
+
+            # 3. Envoi du dictionnaire propre au frontend
+            formatted_history.append({
+                "username": r.get("username", "Anonyme"),
+                "searched_at": r.get("searched_at", "Pas de date"),
+                "city": city_name,  # 👈 Contient maintenant le vrai nom ("Tokyo", "Paris"...) !
+                "month": str(r.get("month", "N/A")),
+                "query": "Filtres appliqués"
+            })
+            
+        print(f"✅ [DIAGNOSTIC] {len(formatted_history)} lignes traduites envoyées au panneau Admin.")
+        return formatted_history
+        
+    except Exception as e:
+        print(f"❌ [DIAGNOSTIC] Erreur lors de la traduction des IDs villes : {str(e)}")
+        return []
+
+@app.get("/api/admin/favorites/top")
+def admin_top_favorites():
+    """Récupère le décompte global de toutes les villes mises en favoris."""
+    from backend.database import get_session, Favorite
+    session = get_session()
+    try:
+        from sqlalchemy import func
+        # Compte le nombre de fois que chaque ville apparaît dans la table favorites
+        rows = session.query(Favorite.city, func.count(Favorite.id).label("total"))\
+                      .group_by(Favorite.city)\
+                      .order_by(func.count(Favorite.id).desc())\
+                      .limit(10).all()
+        return [{"city": r.city, "count": r.total} for r in rows]
+    finally:
+        session.close()

@@ -1,7 +1,7 @@
 version: "3.9"
 
 services:
-  # ── BASE DE DONNÉES (Inchangée) ──
+  # ── BASE DE DONNÉES ──
   db:
     image: postgres:15
     container_name: postgres_db
@@ -15,7 +15,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  # ── BACKEND (Nouveau : FastAPI) ──
+  # ── BACKEND (FastAPI) ──
   backend:
     build:
       context: .
@@ -27,16 +27,15 @@ services:
     depends_on:
       - db  
     ports:
-      - "8000:8000"
+      - "8001:8000"  # ← Change 8000 en 8001
     environment:
-      # C'est maintenant le BACKEND qui parle à la base de données !
       DB_HOST: db
       DB_PORT: 5432
       DB_NAME: bdd_projet_certif
       DB_USER: user
       DB_PASSWORD: password
 
-  # ── FRONTEND (Modifié : Streamlit) ──
+  # ── FRONTEND (Streamlit) ──
   frontend:
     build:
       context: .
@@ -50,8 +49,19 @@ services:
     ports:
       - "8501:8501"
     environment:
-      # 💥 LA CLÉ : Streamlit ne parle plus à la DB, il parle au service 'backend' sur le port 8000
       - API_URL=http://backend:8000
+
+  # ── PGADMIN (Visualiser les données) ──
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
 
 volumes:
   postgres_data:

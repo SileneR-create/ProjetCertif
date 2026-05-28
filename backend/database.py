@@ -31,6 +31,7 @@ Base = declarative_base()
 
 # ─── MODELS SQLALCHEMY ───────────────────────────────────
 
+
 class User(Base):
     __tablename__ = "users"
 
@@ -93,6 +94,7 @@ class UserInterests(Base):
 
 # ─── DB INITIALIZATION ───────────────────────────────────
 
+
 def init_db():
     """Crée les tables dans PostgreSQL si elles n'existent pas"""
     Base.metadata.create_all(bind=engine)
@@ -107,6 +109,7 @@ def _hash_password(password: str, salt: str) -> str:
 
 
 # ─── AUTHENTICATION ──────────────────────────────────────
+
 
 def login_user(username, password):
     session = get_session()
@@ -133,6 +136,7 @@ def login_user(username, password):
 
 
 # ─── PROFILES MANAGEMENT ─────────────────────────────────
+
 
 def save_profile(user_id: int, name: str, preferences: dict):
     session = get_session()
@@ -192,6 +196,7 @@ def delete_profile(profile_id: int, user_id: int):
 
 
 # ─── FAVORITES MANAGEMENT ────────────────────────────────
+
 
 def add_favorite(user_id, city, country, month, score_pct, temp_avg, cluster_label):
     session = get_session()
@@ -269,6 +274,7 @@ def is_favorite(user_id, city, month):
 
 # ─── SEARCH HISTORY ──────────────────────────────────────
 
+
 def save_search(user_id, month, preferences, top_result):
     session = get_session()
     try:
@@ -311,6 +317,7 @@ def get_search_history(user_id, limit=10):
 
 
 # ─── USER INTERESTS ──────────────────────────────────────
+
 
 def register_user(username, email, password, interests: dict):
     session = get_session()
@@ -388,6 +395,7 @@ def update_user_interests(user_id: int, interests: dict):
 # ➕ FONCTIONS POUR L'ADMINISTRATION (Ajoutées via SQLAlchemy)
 # ─────────────────────────────────────────────────────────
 
+
 def db_get_user_stats() -> dict:
     """Compte le nombre total d'utilisateurs et d'administrateurs."""
     session = get_session()
@@ -404,15 +412,7 @@ def db_get_all_users() -> list:
     session = get_session()
     try:
         users = session.query(User).order_by(User.id.desc()).all()
-        return [
-            {
-                "id": u.id,
-                "username": u.username,
-                "email": u.email,
-                "is_admin": u.is_admin
-            }
-            for u in users
-        ]
+        return [{"id": u.id, "username": u.username, "email": u.email, "is_admin": u.is_admin} for u in users]
     finally:
         session.close()
 
@@ -436,17 +436,24 @@ def db_get_admin_search_history() -> list:
     session = get_session()
     try:
         # Jointure entre SearchHistory et User pour avoir le nom de l'appelant
-        rows = session.query(SearchHistory, User).join(User, SearchHistory.user_id == User.id).order_by(SearchHistory.searched_at.desc()).all()
-        
+        rows = (
+            session.query(SearchHistory, User)
+            .join(User, SearchHistory.user_id == User.id)
+            .order_by(SearchHistory.searched_at.desc())
+            .all()
+        )
+
         history = []
         for search, user in rows:
-            history.append({
-                "id": search.id,
-                "username": user.username,
-                "month": search.month,
-                "query": search.top_result if search.top_result else "Recherche vide",
-                "searched_at": search.searched_at
-            })
+            history.append(
+                {
+                    "id": search.id,
+                    "username": user.username,
+                    "month": search.month,
+                    "query": search.top_result if search.top_result else "Recherche vide",
+                    "searched_at": search.searched_at,
+                }
+            )
         return history
     finally:
         session.close()
