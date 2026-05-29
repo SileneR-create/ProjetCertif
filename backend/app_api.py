@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel
 from typing import Dict, Optional, Any
-from prometheus_fastapi_instrumentator import Instrumentator # type: ignore
+from prometheus_fastapi_instrumentator import Instrumentator  # type: ignore
 import pandas as pd
 import os
 import sys
@@ -35,7 +35,7 @@ from backend.database import (  # noqa: E402
 app = FastAPI(
     title="TravelMatch API", description="Backend de recommandation de destinations de voyage", version="1.0.0"
 )
-    # ── EXPOSE LES MÉTRIQUES POUR PROMETHEUS ──
+# ── EXPOSE LES MÉTRIQUES POUR PROMETHEUS ──
 Instrumentator().instrument(app).expose(app)
 
 df_global: pd.DataFrame = None
