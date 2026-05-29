@@ -134,13 +134,13 @@ Mon projet est une application basée sur le machine learning qui analyse le pro
 ## 🧭 Architecture des données
 
 ### 🔹 MCD
-![MCD](MCD.png)
+![MCD](images/MCD.png)
 
 ### 🔹 MLD
-![MLD](MLD.png)
+![MLD](images/MLD.png)
 
 ### 🔹 MPD
-![MPD](MPD.png)
+![MPD](images/MPD.png)
 
 #### 🗄️ Base de données : `BDD_Projet_Certif`
 
