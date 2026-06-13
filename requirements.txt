@@ -25,3 +25,4 @@ uvicorn
 requests
 psycopg2-binary
 prometheus-fastapi-instrumentator
+mlflow

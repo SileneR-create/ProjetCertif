@@ -14,6 +14,8 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - travelmatch_network
 
   # ── BACKEND (FastAPI) ──
   backend:
@@ -27,13 +29,15 @@ services:
     depends_on:
       - db  
     ports:
-      - "8001:8000"  # ← Change 8000 en 8001
+      - "8001:8000"
     environment:
       DB_HOST: db
       DB_PORT: 5432
       DB_NAME: bdd_projet_certif
       DB_USER: user
       DB_PASSWORD: password
+    networks:
+      - travelmatch_network
 
   # ── FRONTEND (Streamlit) ──
   frontend:
@@ -50,20 +54,24 @@ services:
       - "8501:8501"
     environment:
       - API_URL=http://backend:8000
+    networks:
+      - travelmatch_network
 
   # ── PGADMIN (Visualiser les données) ──
   pgadmin:
     image: dpage/pgadmin4
     container_name: pgadmin
     environment:
-      PGADMIN_DEFAULT_EMAIL: a${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}  # ← Correction ici (suppression du 'a' parasite)
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
     ports:
       - "5050:80"
     depends_on:
       - db
+    networks:
+      - travelmatch_network
 
-  # ── ➕ PROMETHEUS (Collecteur de données de l'IA) ──
+  # ── PROMETHEUS (Collecteur de données de l'IA) ──
   prometheus:
     image: prom/prometheus:latest
     container_name: monitoring_prometheus
@@ -74,8 +82,10 @@ services:
       - "9090:9090"
     depends_on:
       - backend
+    networks:
+      - travelmatch_network
 
-  # ── ➕ GRAFANA (Tableaux de bord visuels) ──
+  # ── GRAFANA (Tableaux de bord visuels) ──
   grafana:
     image: grafana/grafana:latest
     container_name: monitoring_grafana
@@ -86,6 +96,26 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
     depends_on:
       - prometheus
+    networks:
+      - travelmatch_network
+
+  # ── MLFLOW (Tracking d'expériences IA) ──
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.11.3
+    container_name: travelmatch_mlflow
+    restart: always
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow_data:/mlflow
+    command: mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:///mlflow.db --default-artifact-root /mlflow
+    networks:
+      - travelmatch_network
 
 volumes:
   postgres_data:
+  mlflow_data:
+
+networks:
+  travelmatch_network:
+    driver: bridge
