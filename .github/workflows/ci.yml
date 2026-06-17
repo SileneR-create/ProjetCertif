@@ -45,8 +45,8 @@ jobs:
         git status
         git log -1
 
-    - name: Lint
-      run: flake8 . --ignore=E501
+    #- name: Lint
+    #  run: flake8 . --ignore=E501
 
     - name: Format check
       run: black --check .

@@ -6,7 +6,7 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest 
+    runs-on: ubuntu-latest  
 
     steps:
       - name: Checkout code
@@ -36,15 +36,9 @@ jobs:
           push: true
           tags: silener/projetcertif-frontend:latest
 
-      # ── ÉTAPE 3 : LE DÉPLOIEMENT AUTOMATIQUE LOCAL ──
-      - name: Deploy Local Containers
+      # ── ÉTAPE 3 : CRÉATION DU DOSSIER .ENV (Syntaxe native Linux Bash) ──
+      - name: Create Env File
         run: |
-          $envContent = @(
-            "GRAFANA_ADMIN_PASSWORD=${{ secrets.GRAFANA_ADMIN_PASSWORD }}",
-            "PGADMIN_EMAIL=${{ secrets.PGADMIN_EMAIL }}",
-            "PGADMIN_PASSWORD=${{ secrets.PGADMIN_PASSWORD }}"
-          )
-          [System.IO.File]::WriteAllLines("$PWD\.env", $envContent)
-
-          docker compose pull backend frontend
-          docker compose up -d
+          echo "GRAFANA_ADMIN_PASSWORD=${{ secrets.GRAFANA_ADMIN_PASSWORD }}" > .env
+          echo "PGADMIN_EMAIL=${{ secrets.PGADMIN_EMAIL }}" >> .env
+          echo "PGADMIN_PASSWORD=${{ secrets.PGADMIN_PASSWORD }}" >> .env
