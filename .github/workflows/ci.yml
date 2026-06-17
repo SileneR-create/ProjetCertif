@@ -38,7 +38,7 @@ jobs:
       run: |
         pip install --upgrade pip
         pip install -r requirements.txt
-        pip install pytest flake8 black pytest-asyncio
+        pip install pytest pytest-asyncio "httpx[http2]"
 
     - name: Debug Git
       run: |
