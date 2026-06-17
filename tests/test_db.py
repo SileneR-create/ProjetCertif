@@ -6,11 +6,18 @@ import os
 def test_postgres_connection_and_tables():
     """Vérifie que la BDD est accessible et contient des données."""
     host = os.getenv("DB_HOST", "localhost")
+    port = int(os.getenv("DB_PORT", "5433"))
 
     # 1. On tente la connexion. Si elle échoue à cause d'un problème Windows/Docker,
     # on capture l'erreur d'encodage à la racine.
     try:
-        conn = psycopg2.connect(host=host, port=5433, database="bdd_projet_certif", user="user", password="password")
+        conn = psycopg2.connect(
+            host=host,
+            port=port,
+            database='bdd_projet_certif',
+            user='user',
+            password='password'
+            )
     except (psycopg2.OperationalError, UnicodeDecodeError) as network_err:
         pytest.fail(
             "Impossible de se connecter à PostgreSQL. Vérifiez que votre conteneur Docker "
