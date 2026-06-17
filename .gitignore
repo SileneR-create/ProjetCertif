@@ -2,7 +2,6 @@
 diag.py
 front
 *.pkl
-tests/
 database_origin.py
 migrate_db.py
 admin_setup_db.py
