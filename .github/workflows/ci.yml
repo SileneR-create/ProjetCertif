@@ -54,7 +54,8 @@ jobs:
       env:
         PGPASSWORD: ${{ secrets.DB_PASSWORD }}
       run: |
-        psql -h localhost -U ${{ secrets.DB_USER }} -d bdd_projet_certif -f init.sql
+        # On crée directement la table minimale requise via une commande en ligne
+        psql -h localhost -U ${{ secrets.DB_USER }} -d bdd_projet_certif -c "CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, username VARCHAR(50));"
 
     - name: Tests
       env:
