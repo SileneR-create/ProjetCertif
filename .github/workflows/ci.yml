@@ -3,15 +3,29 @@ name: CI Pipeline
 on:
   push:
     branches: [main, develop]
-
   pull_request:
     branches: [main]
 
 jobs:
-
   test:
-
     runs-on: ubuntu-latest
+
+    services:
+      db:
+        image: postgres:15
+        env:
+          # On peut garder 'user' et 'bdd_projet_certif' en clair car ce ne sont pas des secrets,
+          # mais on sécurise le mot de passe critique.
+          POSTGRES_USER: ${{ secrets.DB_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          POSTGRES_DB: bdd_projet_certif
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
     - uses: actions/checkout@v4
@@ -22,8 +36,9 @@ jobs:
 
     - name: Install dependencies
       run: |
+        pip install --upgrade pip
         pip install -r requirements.txt
-        pip install pytest flake8 black
+        pip install pytest flake8 black pytest-asyncio
 
     - name: Debug Git
       run: |
@@ -31,10 +46,18 @@ jobs:
         git log -1
 
     - name: Lint
-      run: flake8 .
+      run: flake8 . --ignore=E501
 
     - name: Format check
-      run: black .
+      run: black --check .
 
     - name: Tests
-      run: pytest -q || echo "No tests found, skipping"
+      env:
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DB_NAME: bdd_projet_certif
+        DB_USER: ${{ secrets.DB_USER }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        MLFLOW_TRACKING_URI: http://localhost:5000
+      run: |
+        pytest tests/

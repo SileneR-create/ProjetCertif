@@ -9,8 +9,22 @@ import mlflow
 
 warnings.filterwarnings("ignore")
 
-mlflow.set_tracking_uri("http://mlflow:5000")
-mlflow.set_experiment("TravelMatch_Engine")
+import os
+
+# Si une URI est fournie dans le système (ex: en CI), on l'utilise.
+# Sinon, si on est sur Windows en local, on bascule sur localhost, sinon sur le conteneur mlflow.
+if "MLFLOW_TRACKING_URI" not in os.environ:
+    # On détecte si on est sous Windows (local) ou Linux (Docker)
+    if os.name == 'nt': 
+        mlflow.set_tracking_uri("http://localhost:5000")
+    else:
+        mlflow.set_tracking_uri("http://mlflow:5000")
+
+# On protège la création de l'expérience pour éviter que les tests unitaires locaux ne plantent si le serveur Docker est éteint
+try:
+    mlflow.set_experiment("TravelMatch_Engine")
+except Exception:
+    print("⚠️ Impossible de se connecter à MLflow. Les logs d'expériences seront désactivés.")
 
 # ─────────────────────────────────────────────
 #  FEATURE GROUPS
@@ -111,6 +125,30 @@ def recommend(df, month, user_prefs, top_n=10, cluster_bonus_id=None):
         user_vector = np.array([[user_prefs.get(f, 3) * 20 for f in ACTIVITY_FEATURES]])
         ideal_cluster_id = rf_model.predict(user_vector)[0]
 
+        eval_df = pd.DataFrame([{
+            "Mois Sélectionné": MONTH_NAMES.get(month, month),
+            "Température (°C)": user_prefs.get("temp_avg", 25),
+            "Budget": user_prefs.get("budget_label", "Non spécifié"),
+            "Cluster Prédit": int(ideal_cluster_id)
+        }])
+
+        # ── ENREGISTREMENT SÉCURISÉ DE L'ARTEFACT ──
+        try:
+            import os
+            # 1. On crée un dossier temporaire local s'il n'existe pas
+            os.makedirs("/tmp/mlflow_evals", exist_ok=True)
+            temp_csv_path = "/tmp/mlflow_evals/eval_results.csv"
+            
+            # 2. On sauvegarde le DataFrame en CSV localement
+            eval_df.to_csv(temp_csv_path, index=False)
+            
+            # 3. On envoie le fichier à MLflow
+            # Il sera stocké dans le volume défini par --default-artifact-root /mlflow/artifacts
+            mlflow.log_artifact(local_path=temp_csv_path, artifact_path="evaluations")
+            
+        except Exception as e:
+            # Le try/except évite de faire crasher FastAPI si l'écriture de l'artefact échoue
+            print(f"⚠️ Erreur lors du log de l'artefact MLflow : {e}")
         # ─────────────────────────────────────────────────────────────
         # FILTRAGE PAR MOIS
         # ─────────────────────────────────────────────────────────────

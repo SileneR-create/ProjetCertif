@@ -11,7 +11,7 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: bdd_projet_certif
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -34,8 +34,8 @@ services:
       DB_HOST: db
       DB_PORT: 5432
       DB_NAME: bdd_projet_certif
-      DB_USER: user
-      DB_PASSWORD: password
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
     networks:
       - travelmatch_network
 
@@ -101,16 +101,21 @@ services:
 
   # ── MLFLOW (Tracking d'expériences IA) ──
   mlflow:
-    image: ghcr.io/mlflow/mlflow:v2.11.3
-    container_name: travelmatch_mlflow
-    restart: always
-    ports:
-      - "5000:5000"
-    volumes:
-      - mlflow_data:/mlflow
-    command: mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:///mlflow.db --default-artifact-root /mlflow
-    networks:
-      - travelmatch_network
+      build:
+        context: .
+        dockerfile: Dockerfile.mlflow  # ← Utilise le nouveau fichier pour inclure psycopg2
+      container_name: travelmatch_mlflow
+      restart: always
+      ports:
+        - "5000:5000"
+      volumes:
+        - mlflow_data:/mlflow
+        - ./mlartifacts:/mlartifacts
+      depends_on:
+        - db
+      command: mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri postgresql://user:password@db:5432/bdd_projet_certif --default-artifact-root /mlartifacts      
+      networks:
+        - travelmatch_network
 
 volumes:
   postgres_data:
