@@ -1,6 +1,7 @@
 """
 Test rapide - VERSION SIMPLIFIÉE
 """
+
 import sys
 import os
 import pandas as pd
@@ -15,9 +16,9 @@ df = pd.read_csv(CSV_PATH)
 print(f"✓ Données chargées: {len(df)} villes\n")
 
 # Tester avec 4 catégories
-print("="*70)
+print("=" * 70)
 print("VERSION SIMPLIFIÉE - 4 CATÉGORIES")
-print("="*70)
+print("=" * 70)
 categorizer = display_budget_categories(df, n_categories=4)
 
 # Montrer quelques exemples
@@ -28,9 +29,9 @@ for city in sample_cities:
     category = categorizer.categorize_city(revenu)
     print(f"  {city:20s} (${revenu:6.2f}/jour) → {category}")
 
-print("\n" + "="*70)
+print("\n" + "=" * 70)
 print("DISTRIBUTION PAR CATÉGORIE")
-print("="*70)
+print("=" * 70)
 info = categorizer.get_category_info()
 total = sum([details["num_cities"] for details in info.values()])
 for category_name, details in info.items():

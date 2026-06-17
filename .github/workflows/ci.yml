@@ -59,6 +59,5 @@ jobs:
         DB_USER: ${{ secrets.DB_USER }}
         DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         MLFLOW_TRACKING_URI: http://localhost:5000
-        PYTHONPATH:
       run: |
-        pytest tests/
+        pytest -o pythonpath=. tests/

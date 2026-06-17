@@ -1,7 +1,6 @@
 import os
 import pandas as pd
 
-
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 PAYS_CODES = pd.read_csv(os.path.join(BASE_DIR, "DATA", "processed", "WorldTravel_ISO.csv"))["code_3L"].tolist()

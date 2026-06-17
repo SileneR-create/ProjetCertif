@@ -15,7 +15,7 @@ import os
 # Sinon, si on est sur Windows en local, on bascule sur localhost, sinon sur le conteneur mlflow.
 if "MLFLOW_TRACKING_URI" not in os.environ:
     # On détecte si on est sous Windows (local) ou Linux (Docker)
-    if os.name == 'nt': 
+    if os.name == "nt":
         mlflow.set_tracking_uri("http://localhost:5000")
     else:
         mlflow.set_tracking_uri("http://mlflow:5000")
@@ -112,12 +112,12 @@ def engineer_features(df):
 def recommend(df, month, user_prefs, top_n=10, cluster_bonus_id=None):
 
     with mlflow.start_run(run_name=f"Recommendation_{MONTH_NAMES.get(month, month)}"):
-        
+
         # Log des paramètres envoyés par l'utilisateur (Hyperparamètres du run)
         mlflow.log_param("target_month", MONTH_NAMES.get(month, month))
         mlflow.log_param("target_temp", user_prefs.get("temp_avg", 25))
         mlflow.log_param("budget_selected", user_prefs.get("budget_label", "Non spécifié"))
-    
+
         # Initialisation IA
         city_clusters, rf_model = train_ml_engine(df)
 
@@ -125,27 +125,32 @@ def recommend(df, month, user_prefs, top_n=10, cluster_bonus_id=None):
         user_vector = np.array([[user_prefs.get(f, 3) * 20 for f in ACTIVITY_FEATURES]])
         ideal_cluster_id = rf_model.predict(user_vector)[0]
 
-        eval_df = pd.DataFrame([{
-            "Mois Sélectionné": MONTH_NAMES.get(month, month),
-            "Température (°C)": user_prefs.get("temp_avg", 25),
-            "Budget": user_prefs.get("budget_label", "Non spécifié"),
-            "Cluster Prédit": int(ideal_cluster_id)
-        }])
+        eval_df = pd.DataFrame(
+            [
+                {
+                    "Mois Sélectionné": MONTH_NAMES.get(month, month),
+                    "Température (°C)": user_prefs.get("temp_avg", 25),
+                    "Budget": user_prefs.get("budget_label", "Non spécifié"),
+                    "Cluster Prédit": int(ideal_cluster_id),
+                }
+            ]
+        )
 
         # ── ENREGISTREMENT SÉCURISÉ DE L'ARTEFACT ──
         try:
             import os
+
             # 1. On crée un dossier temporaire local s'il n'existe pas
             os.makedirs("/tmp/mlflow_evals", exist_ok=True)
             temp_csv_path = "/tmp/mlflow_evals/eval_results.csv"
-            
+
             # 2. On sauvegarde le DataFrame en CSV localement
             eval_df.to_csv(temp_csv_path, index=False)
-            
+
             # 3. On envoie le fichier à MLflow
             # Il sera stocké dans le volume défini par --default-artifact-root /mlflow/artifacts
             mlflow.log_artifact(local_path=temp_csv_path, artifact_path="evaluations")
-            
+
         except Exception as e:
             # Le try/except évite de faire crasher FastAPI si l'écriture de l'artefact échoue
             print(f"⚠️ Erreur lors du log de l'artefact MLflow : {e}")
@@ -311,9 +316,11 @@ def recommend(df, month, user_prefs, top_n=10, cluster_bonus_id=None):
             # On enregistre le meilleur score de correspondance trouvé pour ce profil
             mlflow.log_metric("max_suitability_score", float(results["score"].max()))
             mlflow.log_metric("min_suitability_score", float(results["score"].min()))
-            
+
             # Enregistrement du type de cluster majoritairement poussé par l'IA
-            predicted_label = results.at[0, "cluster_label"] if "cluster_label" in results.columns else str(ideal_cluster_id)
+            predicted_label = (
+                results.at[0, "cluster_label"] if "cluster_label" in results.columns else str(ideal_cluster_id)
+            )
             mlflow.log_param("top_recommended_cluster", predicted_label)
 
         return results

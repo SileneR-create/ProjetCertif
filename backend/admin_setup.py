@@ -53,13 +53,11 @@ def list_users():
     cursor = conn.cursor()
 
     try:
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT id, username, email, is_admin
             FROM users
             ORDER BY created_at
-            """
-        )
+            """)
 
         users = cursor.fetchall()
 
