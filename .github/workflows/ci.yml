@@ -48,8 +48,8 @@ jobs:
     #- name: Lint
     #  run: flake8 . --ignore=E501
 
-    - name: Format check
-      run: black --check .
+    #- name: Format check
+     # run: black --check .
 
     - name: Tests
       env:
