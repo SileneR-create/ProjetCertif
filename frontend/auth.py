@@ -6,7 +6,7 @@ Modifié pour communiquer exclusivement via l'API FastAPI (Architecture Découpl
 import streamlit as st
 import sys
 import os
-import requests  # 👈 Remplacer les accès base de données par des requêtes HTTP
+import requests  
 
 # Configuration de l'URL de l'API (gérée par Docker ou localhost par défaut)
 API_URL = os.getenv("API_URL", "http://localhost:8000")

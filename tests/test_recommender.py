@@ -1,6 +1,8 @@
 import pytest
 import pandas as pd
 import numpy as np
+from sklearn.metrics import f1_score
+from sklearn.model_selection import cross_val_score
 from recommender import train_ml_engine, recommend, engineer_features
 
 
@@ -45,6 +47,42 @@ def test_ml_engine_clustering(fake_travel_dataset):
     assert "cluster_id" in city_clusters.columns
     # Le modèle RandomForest doit être capable de prédire
     assert hasattr(rf_model, "predict")
+
+
+def test_model_performance_threshold(fake_travel_dataset):
+    """C12 — Seuil de performance minimal du modèle.
+
+    Le Random Forest surrogate prédit les archétypes KMeans.
+    On vérifie que le f1_weighted (CV 2-fold sur mini-dataset) dépasse
+    un seuil minimal — si ce test échoue, le modèle a trop régressé
+    et ne doit pas partir en production.
+
+    Seuil : 0.30 sur ce mini-dataset de 6 villes (dataset très petit,
+    seuil volontairement bas). En production sur ~560 villes, le seuil
+    attendu est ≥ 0.60 (voir mlops/train.py best_test_f1).
+    """
+    from sklearn.preprocessing import MinMaxScaler
+    from recommender import ACTIVITY_FEATURES
+
+    city_group = fake_travel_dataset.groupby("city")[ACTIVITY_FEATURES].mean().reset_index()
+    scaler = MinMaxScaler()
+    X_scaled = scaler.fit_transform(city_group[ACTIVITY_FEATURES])
+
+    from sklearn.cluster import KMeans
+    from sklearn.ensemble import RandomForestClassifier
+
+    kmeans = KMeans(n_clusters=3, random_state=42, n_init=10)  # 3 clusters sur 6 villes
+    y = kmeans.fit_predict(X_scaled)
+
+    rf = RandomForestClassifier(n_estimators=50, random_state=42)
+    scores = cross_val_score(rf, city_group[ACTIVITY_FEATURES], y, cv=2, scoring="f1_weighted")
+    f1_mean = scores.mean()
+
+    SEUIL_MINIMAL = 0.30
+    assert f1_mean >= SEUIL_MINIMAL, (
+        f"Performance du modèle ({f1_mean:.3f}) sous le seuil minimal ({SEUIL_MINIMAL}). "
+        "Réentraîner le modèle avant déploiement."
+    )
 
 
 def test_recommendation_logic(fake_travel_dataset):

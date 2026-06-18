@@ -26,3 +26,7 @@ requests
 psycopg2-binary
 prometheus-fastapi-instrumentator
 mlflow
+
+# Benchmark de classifieurs (mlops/train.py) — optionnels mais recommandés
+xgboost
+lightgbm

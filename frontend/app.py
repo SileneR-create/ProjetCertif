@@ -13,8 +13,7 @@ ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
 if ROOT_DIR not in sys.path:
     sys.path.append(ROOT_DIR)
 
-# ON CONSERVE UNIQUEMENT les imports liés à l'affichage visuel ou à l'authentification UI
-from admin import show_admin_page
+from frontend.admin import show_admin_page
 from frontend.auth import show_user_widget, is_logged_in, get_current_user
 from backend.utils import get_cached_images, display_image_carousel
 
@@ -192,6 +191,14 @@ def show_auth_page():
                         st.error("Serveur indisponible.")
 
 
+@st.cache_data(ttl=300)
+def _get_budget_info(api_url: str) -> dict:
+    try:
+        return requests.get(f"{api_url}/budget/info").json()
+    except Exception:
+        return {}
+
+
 # ─────────────────────────────────────────────
 #  SIDEBAR
 # ─────────────────────────────────────────────
@@ -229,10 +236,7 @@ def build_sidebar():
     indice_medecins = st.sidebar.slider("Médecins (pour 1000 habitants)", 0.0, 5.0, 2.0, key="slider_medecins")
 
     st.sidebar.markdown('<div class="sidebar-section">💰 Budget sur place</div>', unsafe_allow_html=True)
-    try:
-        budget_info = requests.get(f"{API_URL}/budget/info").json()
-    except Exception:
-        budget_info = {}
+    budget_info = _get_budget_info(API_URL)
 
     budget_options = {}
     for category_name, details in budget_info.items():
@@ -576,6 +580,13 @@ def main():
     with col_results:
         st.markdown("### 🏆 Classement")
 
+        # Charge tous les favoris en une seule requête (évite N appels /favorites/check)
+        try:
+            user_favs = requests.get(f"{API_URL}/favorites", params={"user_id": user["id"]}).json()
+            fav_set = {(f["city"], int(f["month"])) for f in user_favs}
+        except Exception:
+            fav_set = set()
+
         for _, row in results.iterrows():
             city_name = row.get(city_col, f"Ville #{row['rang']}")
             score = row.get("score_pct", 0)
@@ -584,13 +595,7 @@ def main():
             dollars = row.get("Revenu moyen par habitant ($/jour)", None)
             country = row.get("country", "")
 
-            try:
-                fav_check = requests.get(
-                    f"{API_URL}/favorites/check", params={"user_id": user["id"], "city": city_name, "month": month}
-                ).json()
-                already_fav = fav_check.get("is_favorite", False)
-            except Exception:
-                already_fav = False
+            already_fav = (city_name, month) in fav_set
 
             with st.expander(f"#{row['rang']}  {city_name}  —  {score:.0f}%", expanded=row["rang"] <= 3):
                 c1, c2, c3 = st.columns([2, 1, 1])

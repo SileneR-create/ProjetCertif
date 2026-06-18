@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel
 from typing import Dict, Optional, Any
 from prometheus_fastapi_instrumentator import Instrumentator  # type: ignore
+from prometheus_client import Gauge, Counter
 import pandas as pd
 import os
 import sys
@@ -12,7 +13,7 @@ if ROOT_DIR not in sys.path:
     sys.path.append(ROOT_DIR)
 
 # Imports des modules metiers
-from recommender import recommend, engineer_features  # noqa: E402
+from recommender import recommend, engineer_features, warmup  # noqa: E402
 from budget_categorizer import BudgetCategorizer  # noqa: E402
 from backend.database import (  # noqa: E402
     init_db,
@@ -35,8 +36,30 @@ from backend.database import (  # noqa: E402
 app = FastAPI(
     title="TravelMatch API", description="Backend de recommandation de destinations de voyage", version="1.0.0"
 )
-# ── EXPOSE LES MÉTRIQUES POUR PROMETHEUS ──
+# ── EXPOSE LES MÉTRIQUES HTTP POUR PROMETHEUS ──
 Instrumentator().instrument(app).expose(app)
+
+# ── MÉTRIQUES MÉTIER DU MODÈLE IA ────────────────────────────────────────────
+# Ces métriques permettent de détecter une dérive du modèle de recommandation
+# (C11 — monitoring modèle, C20 — feedback loop MLOps).
+
+METRIC_SCORE_MOYEN = Gauge(
+    "travelmatch_score_moyen_matching",
+    "Score moyen de matching (0-100) des recommandations retournées — signal de dérive du modèle",
+)
+METRIC_SCORE_MIN = Gauge(
+    "travelmatch_score_min_matching",
+    "Score minimum de matching parmi les recommandations retournées",
+)
+METRIC_RECOMMANDATIONS_TOTAL = Counter(
+    "travelmatch_recommandations_total",
+    "Nombre total d'appels à POST /recommendations",
+)
+METRIC_CLUSTER_DISTRIBUTION = Counter(
+    "travelmatch_cluster_recommande_total",
+    "Distribution des clusters recommandés (monitoring dérive archétypes)",
+    ["cluster_label"],
+)
 
 df_global: pd.DataFrame = None
 categorizer: BudgetCategorizer = None
@@ -57,6 +80,13 @@ def startup_event():
     categorizer = BudgetCategorizer(df_global, n_categories=4)
 
     print("🤖 [STARTUP] Pipeline de feature engineering appliquée avec succès.")
+
+    # Pré-chauffe le cache ML : charge depuis MLflow ou entraîne une seule fois.
+    # Les requêtes /recommendations suivantes ne déclencheront plus d'entraînement.
+    try:
+        warmup(df_global)
+    except Exception as e:
+        print(f"⚠️ [STARTUP] Pré-chauffe ML échouée ({e}) — le cache sera initialisé à la première requête.")
 
 
 class UserLogin(BaseModel):
@@ -141,7 +171,7 @@ def get_budget_info():
 def get_budget_map_value(label: str = Query(...)):
     if categorizer is None:
         return 1
-    return categorizer.get_budget_map.get(label, 1)
+    return categorizer.get_budget_map().get(label, 1)
 
 
 @app.post("/recommendations")
@@ -164,6 +194,16 @@ def get_recommendations(req: RecommendRequest):
             city_col = "city" if "city" in results_df.columns else results_df.columns[0]
             top_result = results_df.iloc[0][city_col]
             save_search(req.user_id, req.month, req.prefs, str(top_result))
+
+            # ── Mise à jour des métriques modèle IA (feedback loop C11/C20) ──
+            METRIC_RECOMMANDATIONS_TOTAL.inc()
+            if "score_pct" in results_df.columns:
+                METRIC_SCORE_MOYEN.set(float(results_df["score_pct"].mean()))
+                METRIC_SCORE_MIN.set(float(results_df["score_pct"].min()))
+            if "cluster_label" in results_df.columns:
+                for label in results_df["cluster_label"].dropna():
+                    METRIC_CLUSTER_DISTRIBUTION.labels(cluster_label=str(label)).inc()
+
         return results_df.to_dict(orient="records")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
