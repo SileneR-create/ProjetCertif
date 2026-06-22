@@ -27,8 +27,17 @@ def get_current_user() -> dict | None:
 
 def logout():
     st.session_state.pop("user", None)
+    st.session_state.pop("token", None)
     st.session_state.pop("auth_tab", None)
     st.rerun()
+
+
+def auth_headers() -> dict:
+    """Retourne l'en-tête Authorization Bearer pour les appels API protégés."""
+    token = st.session_state.get("token", "")
+    if not token:
+        return {}
+    return {"Authorization": f"Bearer {token}"}
 
 
 # ─────────────────────────────────────────────
@@ -100,6 +109,7 @@ def show_auth_page():
                     if response.status_code == 200:
                         result = response.json()
                         st.session_state["user"] = result["user"]
+                        st.session_state["token"] = result.get("access_token", "")
                         st.success("Connexion réussie ! Connexion en cours... 🎉")
                         st.rerun()
                     else:
@@ -165,7 +175,9 @@ def show_auth_page():
                             f"{API_URL}/auth/login", json={"username": new_username, "password": new_password}
                         )
                         if login_response.status_code == 200:
-                            st.session_state["user"] = login_response.json()["user"]
+                            login_data = login_response.json()
+                            st.session_state["user"] = login_data["user"]
+                            st.session_state["token"] = login_data.get("access_token", "")
                             st.rerun()
                         else:
                             st.warning(

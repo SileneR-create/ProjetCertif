@@ -7,9 +7,9 @@ services:
     container_name: postgres_db
     restart: always
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: bdd_projet_certif
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
       - "5433:5432"
     volumes:
@@ -33,9 +33,10 @@ services:
     environment:
       DB_HOST: db
       DB_PORT: 5432
-      DB_NAME: bdd_projet_certif
+      DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
+      SECRET_KEY: ${SECRET_KEY}
     networks:
       - travelmatch_network
 
@@ -115,7 +116,7 @@ services:
         - ./mlartifacts:/mlartifacts
       depends_on:
         - db
-      command: mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri postgresql://user:password@db:5432/bdd_projet_certif --artifacts-destination /mlartifacts --serve-artifacts
+      command: mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME} --artifacts-destination /mlartifacts --serve-artifacts
       networks:
         - travelmatch_network
 

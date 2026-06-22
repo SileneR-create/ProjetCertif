@@ -15,29 +15,57 @@
 # ── Jupyter ───────────────────────────────────────────────────────────────────
 **/.ipynb_checkpoints/
 Notebook/cache/
-Notebook/.cache.sqlite
-Notebook/*.pkl
+Notebook/.cache.*
 
 # ── MLflow (artefacts locaux — le serveur MLflow tourne dans Docker) ──────────
 mlflow.db
 mlruns/
 mlartifacts/
 
-# ── Bases SQLite de développement (l'app utilise PostgreSQL en prod) ──────────
-travelmatch.db
-frontend/travelmatch.db
-backend/database/*.db
-DATA/external/*.db
+# ── Bases de données locales (l'app utilise PostgreSQL en prod) ───────────────
+*.db
+*.sqlite
+*.sqlite3
 
-# ── Données brutes (archives volumineuses, pas de valeur dans l'historique) ───
-DATA/raw/*.zip
-DATA/raw/cities500.*
+# ── Modèles ML sérialisés ────────────────────────────────────────────────────
+*.pkl
+*.joblib
+*.h5
+*.pt
+*.pth
 
-# ── Documents de certification ────────────────────────────────────────────────
-E*.docx
+# ── Données brutes et intermédiaires ─────────────────────────────────────────
+DATA/raw/
+DATA/external/
+DATA/processed/*.csv
+!DATA/processed/data_clean.csv
 
-# ── Screenshots et images de documentation ────────────────────────────────────
-images/
+# ── Présentations et documents bureautiques ───────────────────────────────────
+*.pptx
+*.ppt
+*.pptm
+*.xlsx
+*.xls
+*.xlsm
+*.docx
+*.pdf
+
+# ── Photos, vidéos et médias ──────────────────────────────────────────────────
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.tiff
+*.webp
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.mp3
+*.wav
+
+# ── Screenshots hors documentation ───────────────────────────────────────────
+qa_slide-*.png
 
 # ── Fichiers de debug/migration one-shot ─────────────────────────────────────
 diag.py

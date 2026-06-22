@@ -16,9 +16,9 @@ def pg_conn():
         conn = psycopg2.connect(
             host=host,
             port=port,
-            database="bdd_projet_certif",
-            user="user",
-            password="password",
+            database=os.getenv("DB_NAME", "bdd_projet_certif"),
+            user=os.getenv("DB_USER", "user"),
+            password=os.getenv("DB_PASSWORD", "password"),
         )
         yield conn
         conn.close()

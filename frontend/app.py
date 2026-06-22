@@ -14,7 +14,7 @@ if ROOT_DIR not in sys.path:
     sys.path.append(ROOT_DIR)
 
 from frontend.admin import show_admin_page
-from frontend.auth import show_user_widget, is_logged_in, get_current_user
+from frontend.auth import show_user_widget, is_logged_in, get_current_user, auth_headers
 from backend.utils import get_cached_images, display_image_carousel
 
 # ── CONFIGURATION DE L'URL DE L'API ──
@@ -367,7 +367,7 @@ def show_profile_tab(user: dict):
     with tab_interests:
         st.markdown("#### Modifiez vos centres d'intérêt")
         try:
-            current = requests.get(f"{API_URL}/users/{user['id']}/interests").json()
+            current = requests.get(f"{API_URL}/users/{user['id']}/interests", headers=auth_headers()).json()
         except Exception:
             current = {}
 
@@ -389,14 +389,14 @@ def show_profile_tab(user: dict):
                 new_interests[key] = val
 
         if st.button("💾 Sauvegarder mes centres d'intérêt", type="primary"):
-            requests.put(f"{API_URL}/users/{user['id']}/interests", json=new_interests)
+            requests.put(f"{API_URL}/users/{user['id']}/interests", json=new_interests, headers=auth_headers())
             st.session_state["user_interests"] = new_interests
             st.success("✅ Centres d'intérêt mis à jour !")
             st.rerun()
 
     with tab_favs:
         try:
-            favs = requests.get(f"{API_URL}/favorites", params={"user_id": user["id"]}).json()
+            favs = requests.get(f"{API_URL}/favorites", params={"user_id": user["id"]}, headers=auth_headers()).json()
         except Exception:
             favs = []
 
@@ -418,13 +418,14 @@ def show_profile_tab(user: dict):
                         requests.delete(
                             f"{API_URL}/favorites",
                             json={"user_id": user["id"], "city": fav["city"], "month": int(fav["month"])},
+                            headers=auth_headers(),
                         )
                         st.rerun()
                 st.divider()
 
     with tab_history:
         try:
-            history = requests.get(f"{API_URL}/history", params={"user_id": user["id"], "limit": 15}).json()
+            history = requests.get(f"{API_URL}/history", params={"user_id": user["id"], "limit": 15}, headers=auth_headers()).json()
         except Exception:
             history = []
 
@@ -463,7 +464,7 @@ def main():
 
     if "user_interests" not in st.session_state:
         try:
-            st.session_state["user_interests"] = requests.get(f"{API_URL}/users/{user['id']}/interests").json()
+            st.session_state["user_interests"] = requests.get(f"{API_URL}/users/{user['id']}/interests", headers=auth_headers()).json()
         except Exception:
             st.session_state["user_interests"] = {
                 "nature": 3,
@@ -519,7 +520,7 @@ def main():
                 "prefs": prefs,
             }
             try:
-                response = requests.post(f"{API_URL}/recommendations", json=payload)
+                response = requests.post(f"{API_URL}/recommendations", json=payload, headers=auth_headers())
                 if response.status_code == 200:
                     data_json = response.json()
                     results = pd.DataFrame(data_json)
@@ -582,7 +583,7 @@ def main():
 
         # Charge tous les favoris en une seule requête (évite N appels /favorites/check)
         try:
-            user_favs = requests.get(f"{API_URL}/favorites", params={"user_id": user["id"]}).json()
+            user_favs = requests.get(f"{API_URL}/favorites", params={"user_id": user["id"]}, headers=auth_headers()).json()
             fav_set = {(f["city"], int(f["month"])) for f in user_favs}
         except Exception:
             fav_set = set()
@@ -613,7 +614,9 @@ def main():
                     if st.button(fav_label, key=f"fav_{row['rang']}_{city_name}", use_container_width=True):
                         if already_fav:
                             requests.delete(
-                                f"{API_URL}/favorites", json={"user_id": user["id"], "city": city_name, "month": month}
+                                f"{API_URL}/favorites",
+                                json={"user_id": user["id"], "city": city_name, "month": month},
+                                headers=auth_headers(),
                             )
                             st.toast(f"💔 {city_name} retiré des favoris")
                         else:
@@ -626,7 +629,7 @@ def main():
                                 "temp_avg": float(temp) if temp else 0.0,
                                 "cluster_label": cluster,
                             }
-                            requests.post(f"{API_URL}/favorites", json=payload_fav)
+                            requests.post(f"{API_URL}/favorites", json=payload_fav, headers=auth_headers())
                             st.toast(f"❤️ {city_name} ajouté aux favoris !")
                         st.rerun()
 

@@ -10,6 +10,8 @@ import os
 import requests
 from datetime import datetime, timedelta
 
+from frontend.auth import auth_headers
+
 # Récupération de l'URL du Backend FastAPI depuis le docker-compose
 API_URL = os.getenv("API_URL", "http://localhost:8000")
 
@@ -36,7 +38,7 @@ def require_admin(user: dict) -> bool:
 
 def get_user_stats() -> dict:
     try:
-        response = requests.get(f"{API_URL}/api/admin/stats")
+        response = requests.get(f"{API_URL}/api/admin/stats", headers=auth_headers())
         if response.status_code == 200:
             return response.json()
         return {"total_users": 0, "total_admins": 0}
@@ -46,7 +48,7 @@ def get_user_stats() -> dict:
 
 def get_all_users() -> list:
     try:
-        response = requests.get(f"{API_URL}/api/admin/users")
+        response = requests.get(f"{API_URL}/api/admin/users", headers=auth_headers())
         if response.status_code == 200:
             return response.json()
         return []
@@ -56,7 +58,7 @@ def get_all_users() -> list:
 
 def delete_user(user_id: int) -> bool:
     try:
-        response = requests.delete(f"{API_URL}/api/admin/users/{user_id}")
+        response = requests.delete(f"{API_URL}/api/admin/users/{user_id}", headers=auth_headers())
         return response.status_code == 200
     except Exception:
         return False
@@ -64,7 +66,7 @@ def delete_user(user_id: int) -> bool:
 
 def get_admin_search_history() -> list:
     try:
-        response = requests.get(f"{API_URL}/api/admin/history")
+        response = requests.get(f"{API_URL}/api/admin/history", headers=auth_headers())
         if response.status_code == 200:
             return response.json()
         return []
@@ -73,9 +75,8 @@ def get_admin_search_history() -> list:
 
 
 def get_top_favorites() -> list:
-    """Nouvelle requête pour récupérer le classement des favoris globaux."""
     try:
-        response = requests.get(f"{API_URL}/api/admin/favorites/top")
+        response = requests.get(f"{API_URL}/api/admin/favorites/top", headers=auth_headers())
         if response.status_code == 200:
             return response.json()
         return []

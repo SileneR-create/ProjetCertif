@@ -14,6 +14,7 @@ en CI sans serveur graphique.
 """
 
 import os
+import shutil
 import tempfile
 
 import matplotlib
@@ -27,12 +28,15 @@ from sklearn.metrics import (  # noqa: E402
     confusion_matrix,
     classification_report,
     ConfusionMatrixDisplay,
+    roc_curve,
+    auc,
     silhouette_score,
     silhouette_samples,
     davies_bouldin_score,
     calinski_harabasz_score,
 )
 from sklearn.model_selection import learning_curve  # noqa: E402
+from sklearn.preprocessing import label_binarize  # noqa: E402
 
 
 # ─────────────────────────────────────────────────────────
@@ -63,11 +67,14 @@ def setup_mlflow(experiment_name: str) -> None:
 
 def _log_figure(fig, filename: str, artifact_path: str = "plots") -> None:
     """Sauvegarde une figure matplotlib et l'envoie à MLflow comme artefact."""
-    with tempfile.TemporaryDirectory() as tmp:
+    tmp = tempfile.mkdtemp()
+    try:
         path = os.path.join(tmp, filename)
         fig.savefig(path, bbox_inches="tight", dpi=120)
         mlflow.log_artifact(path, artifact_path=artifact_path)
-    plt.close(fig)
+    finally:
+        plt.close(fig)
+        shutil.rmtree(tmp, ignore_errors=True)
 
 
 # ─────────────────────────────────────────────────────────
@@ -80,11 +87,14 @@ def log_classification_report(y_true, y_pred, filename: str = "classification_re
     text = classification_report(y_true, y_pred, zero_division=0)
     report = classification_report(y_true, y_pred, zero_division=0, output_dict=True)
 
-    with tempfile.TemporaryDirectory() as tmp:
+    tmp = tempfile.mkdtemp()
+    try:
         path = os.path.join(tmp, filename)
         with open(path, "w", encoding="utf-8") as f:
             f.write(text)
         mlflow.log_artifact(path, artifact_path="reports")
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
 
     if "accuracy" in report:
         mlflow.log_metric("accuracy", float(report["accuracy"]))
@@ -146,6 +156,86 @@ def log_feature_importances(model, feature_names, filename: str = "feature_impor
     _log_figure(fig, filename)
     for i in order:
         mlflow.log_metric(f"importance_{feature_names[i]}", float(imp[i]))
+
+
+def log_classification_report_heatmap(y_true, y_pred,
+                                       filename: str = "classification_report_heatmap.png") -> None:
+    """Heatmap visuelle du rapport de classification (précision / rappel / F1 par classe)."""
+    report = classification_report(y_true, y_pred, zero_division=0, output_dict=True)
+    classes = [k for k in report if k not in ("accuracy", "macro avg", "weighted avg")]
+    metrics = ["precision", "recall", "f1-score"]
+    labels = ["Précision", "Rappel", "F1-score"]
+
+    data = np.array([[report[c][m] for m in metrics] for c in classes])
+
+    fig, ax = plt.subplots(figsize=(7, max(4, 0.5 * len(classes) + 2)))
+    im = ax.imshow(data, cmap="RdYlGn", vmin=0, vmax=1, aspect="auto")
+    ax.set_xticks(range(len(metrics)))
+    ax.set_xticklabels(labels)
+    ax.set_yticks(range(len(classes)))
+    ax.set_yticklabels([f"Cluster {c}" for c in classes])
+    for i in range(len(classes)):
+        for j in range(len(metrics)):
+            ax.text(j, i, f"{data[i, j]:.2f}", ha="center", va="center", fontsize=9)
+    fig.colorbar(im, ax=ax, shrink=0.8)
+    ax.set_title("Rapport de classification — Heatmap")
+    _log_figure(fig, filename, artifact_path="reports")
+
+
+def log_roc_curves(model, X_test, y_test, filename: str = "roc_curves.png") -> None:
+    """Courbes ROC one-vs-rest pour chaque classe + AUC loggé comme métrique."""
+    if not hasattr(model, "predict_proba"):
+        return
+
+    classes = sorted(np.unique(y_test))
+    y_bin = label_binarize(y_test, classes=classes)
+    y_score = model.predict_proba(X_test)
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+    auc_values = []
+    for i, cls in enumerate(classes):
+        fpr, tpr, _ = roc_curve(y_bin[:, i], y_score[:, i])
+        roc_auc = auc(fpr, tpr)
+        auc_values.append(roc_auc)
+        ax.plot(fpr, tpr, label=f"Cluster {cls} (AUC = {roc_auc:.2f})")
+        mlflow.log_metric(f"auc_cluster_{cls}", roc_auc)
+
+    macro_auc = float(np.mean(auc_values))
+    mlflow.log_metric("macro_auc", macro_auc)
+
+    ax.plot([0, 1], [0, 1], "k--", label="Aléatoire")
+    ax.set_xlabel("Taux de faux positifs")
+    ax.set_ylabel("Taux de vrais positifs")
+    ax.set_title(f"Courbes ROC — One-vs-Rest (macro AUC = {macro_auc:.2f})")
+    ax.legend(loc="lower right", fontsize=8)
+    ax.grid(alpha=0.3)
+    _log_figure(fig, filename)
+
+
+def log_cv_scores_distribution(cv_results: dict, scoring: str = "f1_weighted",
+                                filename: str = "cv_scores_distribution.png") -> None:
+    """Boxplot de la distribution des scores par fold pour le meilleur candidat."""
+    split_keys = sorted(k for k in cv_results if k.startswith("split") and k.endswith("test_score"))
+    if not split_keys:
+        return
+
+    best_idx = int(np.argmax(cv_results["mean_test_score"]))
+    scores = [float(cv_results[k][best_idx]) for k in split_keys]
+    mean_s = float(np.mean(scores))
+    std_s = float(np.std(scores))
+
+    fig, ax = plt.subplots(figsize=(6, 4))
+    bp = ax.boxplot(scores, patch_artist=True, widths=0.4)
+    bp["boxes"][0].set_facecolor("#a8d8ea")
+    ax.scatter([1] * len(scores), scores, color="steelblue", zorder=5, s=40)
+    ax.axhline(mean_s, color="red", linestyle="--", label=f"Moyenne = {mean_s:.3f} ± {std_s:.3f}")
+    ax.set_xticks([1])
+    ax.set_xticklabels([scoring])
+    ax.set_ylabel("Score")
+    ax.set_title(f"Distribution des scores CV ({len(scores)} folds) — meilleur candidat")
+    ax.legend(fontsize=9)
+    ax.grid(axis="y", alpha=0.3)
+    _log_figure(fig, filename)
 
 
 # ─────────────────────────────────────────────────────────

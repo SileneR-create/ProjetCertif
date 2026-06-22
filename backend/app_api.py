@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Depends
 from pydantic import BaseModel
 from typing import Dict, Optional, Any
 from prometheus_fastapi_instrumentator import Instrumentator  # type: ignore
@@ -14,6 +14,9 @@ if ROOT_DIR not in sys.path:
 
 # Imports des modules metiers
 from recommender import recommend, engineer_features, warmup  # noqa: E402
+from backend.security import (  # noqa: E402
+    create_access_token, get_current_user, require_admin, check_ownership,
+)
 from budget_categorizer import BudgetCategorizer  # noqa: E402
 from backend.database import (  # noqa: E402
     init_db,
@@ -63,6 +66,13 @@ METRIC_CLUSTER_DISTRIBUTION = Counter(
 
 df_global: pd.DataFrame = None
 categorizer: BudgetCategorizer = None
+
+_model_metrics: dict = {
+    "recommandations_total": 0,
+    "score_moyen": None,
+    "score_min": None,
+    "cluster_distribution": {},
+}
 
 
 @app.on_event("startup")
@@ -125,12 +135,12 @@ class FavoriteDeletePayload(BaseModel):
     month: int
 
 
-@app.get("/")
-def read_root():
-    return {"status": "online", "message": "Welcome to TravelMatch API"}
+# ═══════════════════════════════════════════════════════════
+# CREATE  (POST)
+# ═══════════════════════════════════════════════════════════
 
 
-@app.post("/auth/register")
+@app.post("/auth/register", tags=["Create"])
 def api_register(user: UserRegister):
     result = register_user(user.username, user.email, user.password, user.interests)
     if not result["success"]:
@@ -138,46 +148,21 @@ def api_register(user: UserRegister):
     return {"message": "Utilisateur cree avec succes"}
 
 
-@app.post("/auth/login")
+@app.post("/auth/login", tags=["Create"])
 def api_login(user: UserLogin):
     result = login_user(user.username, user.password)
     if not result["success"]:
         raise HTTPException(status_code=401, detail=result["error"])
-    return {"user": result["user"]}
+    u = result["user"]
+    token = create_access_token(u["id"], u["username"], u.get("is_admin", 0))
+    return {"user": u, "access_token": token, "token_type": "bearer"}
 
 
-@app.get("/users/{user_id}/interests")
-def get_api_user_interests(user_id: int):
-    return get_user_interests(user_id)
-
-
-@app.put("/users/{user_id}/interests")
-def update_api_user_interests(user_id: int, interests: Dict[str, int]):
-    try:
-        update_user_interests(user_id, interests)
-        return {"message": "Centres d'interet mis a jour"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/budget/info")
-def get_budget_info():
-    if categorizer is None:
-        raise HTTPException(status_code=503, detail="Service indisponible")
-    return categorizer.get_category_info()
-
-
-@app.get("/budget/map-value")
-def get_budget_map_value(label: str = Query(...)):
-    if categorizer is None:
-        return 1
-    return categorizer.get_budget_map().get(label, 1)
-
-
-@app.post("/recommendations")
-def get_recommendations(req: RecommendRequest):
+@app.post("/recommendations", tags=["Create"])
+def get_recommendations(req: RecommendRequest, current_user: dict = Depends(get_current_user)):
     if df_global is None:
         raise HTTPException(status_code=503, detail="Donnees non pretes")
+    check_ownership(current_user, req.user_id)
 
     user_db_interests = get_user_interests(req.user_id)
     full_prefs = {**req.prefs, **user_db_interests}
@@ -197,30 +182,29 @@ def get_recommendations(req: RecommendRequest):
 
             # ── Mise à jour des métriques modèle IA (feedback loop C11/C20) ──
             METRIC_RECOMMANDATIONS_TOTAL.inc()
+            _model_metrics["recommandations_total"] += 1
             if "score_pct" in results_df.columns:
-                METRIC_SCORE_MOYEN.set(float(results_df["score_pct"].mean()))
-                METRIC_SCORE_MIN.set(float(results_df["score_pct"].min()))
+                score_moyen = float(results_df["score_pct"].mean())
+                score_min = float(results_df["score_pct"].min())
+                METRIC_SCORE_MOYEN.set(score_moyen)
+                METRIC_SCORE_MIN.set(score_min)
+                _model_metrics["score_moyen"] = round(score_moyen, 2)
+                _model_metrics["score_min"] = round(score_min, 2)
             if "cluster_label" in results_df.columns:
                 for label in results_df["cluster_label"].dropna():
                     METRIC_CLUSTER_DISTRIBUTION.labels(cluster_label=str(label)).inc()
+                    _model_metrics["cluster_distribution"][str(label)] = (
+                        _model_metrics["cluster_distribution"].get(str(label), 0) + 1
+                    )
 
         return results_df.to_dict(orient="records")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/favorites")
-def get_api_favorites(user_id: int):
-    return get_favorites(user_id)
-
-
-@app.get("/favorites/check")
-def check_api_favorite(user_id: int, city: str, month: int):
-    return {"is_favorite": is_favorite(user_id, city, month)}
-
-
-@app.post("/favorites")
-def add_api_favorite(fav: FavoritePayload):
+@app.post("/favorites", tags=["Create"])
+def add_api_favorite(fav: FavoritePayload, current_user: dict = Depends(get_current_user)):
+    check_ownership(current_user, fav.user_id)
     try:
         add_favorite(fav.user_id, fav.city, fav.country, fav.month, fav.score_pct, fav.temp_avg, fav.cluster_label)
         return {"message": "Favori ajoute"}
@@ -228,48 +212,83 @@ def add_api_favorite(fav: FavoritePayload):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.delete("/favorites")
-def remove_api_favorite(fav: FavoriteDeletePayload):
-    try:
-        remove_favorite(fav.user_id, fav.city, fav.month)
-        return {"message": "Favori retire"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+# ═══════════════════════════════════════════════════════════
+# READ  (GET)
+# ═══════════════════════════════════════════════════════════
 
 
-@app.get("/history")
-def get_api_history(user_id: int, limit: int = 15):
+@app.get("/", tags=["Read"])
+def read_root():
+    return {"status": "online", "message": "Welcome to TravelMatch API"}
+
+
+@app.get("/budget/info", tags=["Read"])
+def get_budget_info():
+    if categorizer is None:
+        raise HTTPException(status_code=503, detail="Service indisponible")
+    return categorizer.get_category_info()
+
+
+@app.get("/budget/map-value", tags=["Read"])
+def get_budget_map_value(label: str = Query(...)):
+    if categorizer is None:
+        return 1
+    return categorizer.get_budget_map().get(label, 1)
+
+
+@app.get("/users/{user_id}/interests", tags=["Read"])
+def get_api_user_interests(user_id: int, current_user: dict = Depends(get_current_user)):
+    check_ownership(current_user, user_id)
+    return get_user_interests(user_id)
+
+
+@app.get("/favorites", tags=["Read"])
+def get_api_favorites(user_id: int, current_user: dict = Depends(get_current_user)):
+    check_ownership(current_user, user_id)
+    return get_favorites(user_id)
+
+
+@app.get("/favorites/check", tags=["Read"])
+def check_api_favorite(user_id: int, city: str, month: int,
+                        current_user: dict = Depends(get_current_user)):
+    check_ownership(current_user, user_id)
+    return {"is_favorite": is_favorite(user_id, city, month)}
+
+
+@app.get("/history", tags=["Read"])
+def get_api_history(user_id: int, limit: int = 15, current_user: dict = Depends(get_current_user)):
+    check_ownership(current_user, user_id)
     return get_search_history(user_id, limit=limit)
 
 
-# ─────────────────────────────────────────────────────────
-# ➕ NOUVELLES ROUTES POUR LE PANNEAU D'ADMINISTRATION
-# ─────────────────────────────────────────────────────────
+@app.get("/model/metrics", tags=["Read"])
+def get_model_metrics(_: dict = Depends(require_admin)):
+    """
+    Retourne les métriques temps réel du modèle de recommandation IA.
+    Permet de détecter une dérive de performance (monitoring C11/C20).
+    """
+    return {
+        "recommandations_total": _model_metrics["recommandations_total"],
+        "score_moyen_dernier_appel": _model_metrics["score_moyen"],
+        "score_min_dernier_appel": _model_metrics["score_min"],
+        "cluster_distribution_cumulee": _model_metrics["cluster_distribution"],
+    }
 
 
-@app.get("/api/admin/stats")
-def admin_stats():
+@app.get("/api/admin/stats", tags=["Read"])
+def admin_stats(_: dict = Depends(require_admin)):
     """Renvoie le nombre global d'utilisateurs et d'admins."""
     return db_get_user_stats()
 
 
-@app.get("/api/admin/users")
-def admin_users():
+@app.get("/api/admin/users", tags=["Read"])
+def admin_users(_: dict = Depends(require_admin)):
     """Renvoie la liste complète des comptes utilisateurs."""
     return db_get_all_users()
 
 
-@app.delete("/api/admin/users/{user_id}")
-def admin_delete(user_id: int):
-    """Supprime un compte utilisateur."""
-    success = db_delete_user(user_id)
-    if not success:
-        raise HTTPException(status_code=500, detail="Erreur interne lors de la suppression.")
-    return {"status": "success", "message": "Utilisateur supprime."}
-
-
-@app.get("/api/admin/history")
-def get_admin_history():
+@app.get("/api/admin/history", tags=["Read"])
+def get_admin_history(_: dict = Depends(require_admin)):
     try:
         # 1. On récupère l'historique brut (qui contient les IDs ou les requêtes)
         results = db_get_admin_search_history()
@@ -324,8 +343,8 @@ def get_admin_history():
         return []
 
 
-@app.get("/api/admin/favorites/top")
-def admin_top_favorites():
+@app.get("/api/admin/favorites/top", tags=["Read"])
+def admin_top_favorites(_: dict = Depends(require_admin)):
     """Récupère le décompte global de toutes les villes mises en favoris."""
     from backend.database import get_session, Favorite
 
@@ -344,3 +363,43 @@ def admin_top_favorites():
         return [{"city": r.city, "count": r.total} for r in rows]
     finally:
         session.close()
+
+
+# ═══════════════════════════════════════════════════════════
+# UPDATE  (PUT)
+# ═══════════════════════════════════════════════════════════
+
+
+@app.put("/users/{user_id}/interests", tags=["Update"])
+def update_api_user_interests(user_id: int, interests: Dict[str, int],
+                               current_user: dict = Depends(get_current_user)):
+    check_ownership(current_user, user_id)
+    try:
+        update_user_interests(user_id, interests)
+        return {"message": "Centres d'interet mis a jour"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ═══════════════════════════════════════════════════════════
+# DELETE  (DELETE)
+# ═══════════════════════════════════════════════════════════
+
+
+@app.delete("/favorites", tags=["Delete"])
+def remove_api_favorite(fav: FavoriteDeletePayload, current_user: dict = Depends(get_current_user)):
+    check_ownership(current_user, fav.user_id)
+    try:
+        remove_favorite(fav.user_id, fav.city, fav.month)
+        return {"message": "Favori retire"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/admin/users/{user_id}", tags=["Delete"])
+def admin_delete(user_id: int, _: dict = Depends(require_admin)):
+    """Supprime un compte utilisateur."""
+    success = db_delete_user(user_id)
+    if not success:
+        raise HTTPException(status_code=500, detail="Erreur interne lors de la suppression.")
+    return {"status": "success", "message": "Utilisateur supprime."}

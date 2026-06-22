@@ -327,9 +327,21 @@ def run_classification(best_k: int = 6, n_iter: int = 30, models=None) -> None:
                     if hasattr(search, "refit_time_"):
                         mlflow.log_metric("refit_time_sec", float(search.refit_time_))
 
-                    mu.log_confusion_matrix(y_te, y_pred, labels=sorted(np.unique(y)))
-                    mu.log_learning_curve(best, X, y, cv=cv, scoring="f1_weighted")
-                    mu.log_feature_importances(best.named_steps["clf"], list(ACTIVITY_FEATURES))
+                    _visualizations = [
+                        ("confusion_matrix",              lambda: mu.log_confusion_matrix(y_te, y_pred, labels=sorted(np.unique(y)))),
+                        ("classification_report_heatmap", lambda: mu.log_classification_report_heatmap(y_te, y_pred)),
+                        ("roc_curves",                    lambda: mu.log_roc_curves(best, X_te, y_te)),
+                        ("cv_scores_distribution",        lambda: mu.log_cv_scores_distribution(search.cv_results_, scoring="f1_weighted")),
+                        ("learning_curve",                lambda: mu.log_learning_curve(best, X, y, cv=cv, scoring="f1_weighted")),
+                        ("feature_importances",           lambda: mu.log_feature_importances(best.named_steps["clf"], list(ACTIVITY_FEATURES))),
+                    ]
+                    for _viz_name, _viz_fn in _visualizations:
+                        try:
+                            _viz_fn()
+                            print(f"  ✅ Artefact loggé : {_viz_name}")
+                        except Exception as _viz_err:
+                            print(f"  ⚠️  Artefact non généré ({_viz_name}) : {_viz_err}")
+                            mlflow.set_tag(f"viz_warning_{_viz_name}", str(_viz_err)[:240])
 
                     comparison[name] = test_f1
                     print(f"{name:18s} | CV f1={search.best_score_:.3f} | test f1={test_f1:.3f}")
