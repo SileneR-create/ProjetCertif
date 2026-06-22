@@ -34,11 +34,6 @@ mlartifacts/
 *.pt
 *.pth
 
-# ── Données brutes et intermédiaires ─────────────────────────────────────────
-DATA/raw/
-DATA/external/
-DATA/processed/*.csv
-!DATA/processed/data_clean.csv
 
 # ── Présentations et documents bureautiques ───────────────────────────────────
 *.pptx
@@ -67,10 +62,3 @@ DATA/processed/*.csv
 # ── Screenshots hors documentation ───────────────────────────────────────────
 qa_slide-*.png
 
-# ── Fichiers de debug/migration one-shot ─────────────────────────────────────
-diag.py
-debug.py
-front
-database_origin.py
-migrate_db.py
-admin_setup_db.py

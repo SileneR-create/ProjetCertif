@@ -1,0 +1,14 @@
+City,Value,Date,Source,Notes
+Adelaide,0.276,2025,Supplied by City,
+Boston,0.1638,2024,City of Boston,https://data.boston.gov/dataset/open-space
+Chengdu,0.011,2024,"Chengdu Municipal Government Reports, Statistical Yearbooks",
+Cologne,0.3336,2023,Statistical Yearbook 2023,
+Dublin,0.17,2024,Dublin City Council,
+Guangzhou,0.4377,2023,Guangzhou Statistics Bureau,https://tjj.gz.gov.cn/datav/admin/home/www_nj/
+Helsinki,0.42,2023,Kestävä Helsinki,
+Jakarta,0.052,2023,Supplied by City,Green Public Open Space
+Melbourne,0.093,2017,Victorian Planning Authority,
+Montreal,0.13,2024,Ville de Montréal,https://donnees.montreal.ca/fr/dataset/grands-parcs-parcs-d-arrondissements-et-espaces-publics?
+New York,0.27,2023,NYC Department of City Planning and Land Use,Taken from 2022 WCCF submission
+San Francisco,0.21,2025,ParkScore SF,
+Warsaw,0.19,2024,Supplied by City,

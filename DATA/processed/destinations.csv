@@ -1,0 +1,105 @@
+City,country,code_3L,region,short_description,latitude,longitude
+Luanda,angola,AGO,africa,"A bustling port city with vibrant markets, lively music scenes, and a warm coastal breeze that invites exploration and discovery.",-8.8272699,13.2439512
+Bujumbura,burundi,BDI,africa,"A city where vibrant street markets and lush lakeside views create an inviting atmosphere, full of lively interactions and serene moments.",-3.3638125,29.3675028
+Dhaka,bangladesh,BGD,asia,"A whirlwind of vibrant street life, bustling markets, and a rich tapestry of history and culture, offering endless sensory experiences.",23.7643863,90.3890144
+Maun,botswana,BWA,africa,"A gateway to the Okavango Delta, offering a serene blend of wildlife sounds, warm sunsets, and the gentle flow of the river.",-19.9860951,23.4224352
+Whistler,canada,CAN,north_america,"Snow-capped peaks and lush forests create a serene escape, where outdoor adventures meet cozy village vibes and crisp mountain air.",50.1171903,-122.9543022
+Toronto,canada,CAN,north_america,"Dynamic streets buzzing with diverse cultures, vibrant art scenes, and a skyline that hugs the shimmering lake make for an inviting urban experience.",43.6534817,-79.3839347
+Edmonton,canada,CAN,north_america,"Wide-open streets, a lively arts scene, and vibrant festivals create a welcoming atmosphere that feels both dynamic and comfortably laid-back.",53.5462055,-113.491241
+Banff,canada,CAN,north_america,"Majestic mountains, crystal-clear lakes, and fresh alpine air create a breathtakingly serene atmosphere, perfect for nature lovers and adventure seekers alike.",51.175076,-115.5720773
+Québec City,canada,CAN,north_america,"Cobblestone streets and historic architecture create a charming, old-world atmosphere, while the aroma of fresh pastries fills the crisp air.",46.8137431,-71.2084061
+Charlottetown,canada,CAN,north_america,Charming streets lined with historic buildings and a gentle sea breeze create a welcoming atmosphere perfect for leisurely exploration and relaxation.,46.234953,-63.132935
+Calgary,canada,CAN,north_america,"A dynamic blend of urban sophistication and stunning natural landscapes, where vibrant arts scenes meet the majestic Rockies under vast blue skies.",51.0456064,-114.057541
+Halifax,canada,CAN,north_america,"Charming coastal vibes blend with historic architecture, lively pubs, and the salty breeze, creating an inviting and laid-back maritime atmosphere.",44.648618,-63.5859487
+Ottawa,canada,CAN,north_america,"Charming streets lined with historic architecture meet lush green parks, offering a peaceful yet vibrant atmosphere perfect for leisurely exploration.",45.4208777,-75.6901106
+Montreal,canada,CAN,north_america,"Charming streets filled with a mix of European elegance and North American vibrancy, offering lively festivals, diverse cuisine, and artistic flair.",45.5031824,-73.5698065
+Vancouver,canada,CAN,north_america,"Nestled between ocean and mountains, this city offers a harmonious blend of urban excitement and serene natural beauty, perfect for outdoor enthusiasts.",49.2608724,-123.113952
+Quebec City,canada,CAN,north_america,"Cobblestone streets and historic architecture create a charming old-world atmosphere, with lively festivals and cozy bistros offering a warm, inviting experience.",46.8137431,-71.2084061
+Niagara Falls,canada,CAN,north_america,"Roaring waters cascade with breathtaking power, mist hangs in the air, and the vibrant energy of nature leaves you in awe.",43.1065603,-79.0639039
+Vancouver Island,canada,CAN,north_america,"Lush rainforests, rugged coastlines, and charming towns create an inviting atmosphere, perfect for outdoor adventures and tranquil moments by the sea.",49.5929495,-125.702557
+Monteverde,costa rica,CRI,north_america,"Misty cloud forests and vibrant wildlife create an enchanting atmosphere, where every trail offers a new sensory delight and adventure.",10.29115145,-84.81364393886889
+San José,costa rica,CRI,north_america,Bustling streets filled with vibrant markets and lush parks create an inviting mix of urban energy and natural beauty.,9.9325427,-84.0795782
+Manuel Antonio National Park,costa rica,CRI,north_america,"Lush rainforests meet sandy beaches under a vibrant sun, where playful monkeys and colorful birds create an enchanting, tropical experience.",9.3701476,-84.1520793
+Havana,cuba,CUB,north_america,"Colorful streets alive with the rhythm of salsa, vintage cars cruising past, and the scent of cigars create an unforgettable atmosphere.",23.135305,-82.3589631
+Trinidad,cuba,CUB,north_america,"Cobblestone streets echo with the sounds of salsa music, while colorful colonial buildings and vibrant markets create a lively, timeless atmosphere.",21.8052055,-79.9845797
+Marseille,france,FRA,europe,"A lively port city with Mediterranean flair, bustling markets, and a mix of historic charm and modern vibrancy, offering endless exploration.",43.2961743,5.3699525
+Annecy,france,FRA,europe,"Charming canals and cobblestone streets weave through a picturesque town, surrounded by stunning alpine views and the serene waters of a crystal-clear lake.",45.8992348,6.1288847
+Nantes,france,FRA,europe,"A city where historic charm meets modern creativity, with cobblestone streets, vibrant art scenes, and the gentle flow of the Loire River.",47.2186371,-1.5541362
+Bordeaux,france,FRA,europe,"Strolling through sun-dappled streets, you'll find stunning architecture, vibrant markets, and the rich aroma of freshly baked baguettes filling the air.",44.841225,-0.5800364
+Strasbourg,france,FRA,europe,"Charming cobblestone streets lined with half-timbered houses, the aroma of freshly baked pastries, and the gentle flow of the canals create a fairy-tale ambiance.",48.584614,7.7507127
+Carcassonne,france,FRA,europe,"Strolling through cobbled streets surrounded by medieval walls, you feel transported to another era, with vibrant markets and cozy restaurants at every turn.",43.2130358,2.3491069
+Paris,france,FRA,europe,Charming streets lined with artful boutiques and the aroma of freshly baked pastries create a romantic and timeless atmosphere.,48.8588897,2.3200410217200766
+Biarritz,france,FRA,europe,"Ocean breezes mix with the scent of fresh pastries, while sunlit beaches and elegant architecture create a laid-back yet sophisticated vibe.",43.4832523,-1.5592776
+Rennes,france,FRA,europe,"Charming streets lined with timber-framed houses, lively markets, and a vibrant student atmosphere create a welcoming and dynamic experience.",48.1113387,-1.6800198
+Lyon,france,FRA,europe,"Charming cobblestone streets, riverside views, and an irresistible culinary scene make every moment feel like a delightful discovery.",45.7578137,4.8320114
+Carcassone,france,FRA,europe,"Wandering through narrow cobblestone streets, you feel the weight of history enveloped by ancient walls, with the aroma of rustic French cuisine lingering.",43.2130358,2.3491069
+Ajaccio,france,FRA,europe,"Nestled between mountains and sea, this charming coastal town offers sunlit streets, vibrant markets, and a rich tapestry of history and culture.",41.9263991,8.7376029
+Toulouse,france,FRA,europe,"Charming cobblestone streets, pink-hued buildings, and a lively café culture create a welcoming atmosphere that's both vibrant and soothing.",43.6044622,1.4442469
+Colmar,france,FRA,europe,"Charming canals lined with half-timbered houses and vibrant flowers create a fairy-tale atmosphere, inviting leisurely strolls and delightful discoveries.",48.0777517,7.3579641
+Lille,france,FRA,europe,"Charming cobblestone streets, vibrant squares, and a mix of Flemish and French influences create a welcoming atmosphere full of character and warmth.",50.6365654,3.0635282
+Libreville,gabon,GAB,africa,"Lush greenery mingles with urban life, offering a unique blend of vibrant markets, diverse wildlife, and a laid-back coastal vibe.",0.4086518,9.4418849
+Accra,ghana,GHA,africa,"Lively streets filled with vibrant markets, rhythmic music, and the aroma of spicy street food create a captivating and energetic atmosphere.",5.5571096,-0.2012376
+Georgetown,guyana,GUY,south_america,"Lush greenery and colonial architecture meet vibrant local markets and a lively Caribbean vibe, offering a unique and welcoming atmosphere.",6.8137426,-58.1624465
+Hong Kong,hong kong,HKG,asia,"A bustling metropolis where neon lights reflect off harbor waters, offering a vibrant mix of street markets, towering skyscrapers, and serene parks.",22.2793278,114.1628131
+Nairobi,kenya,KEN,africa,"Bustling streets filled with colorful markets, the aroma of street food, and a lively mix of cultures create a dynamic urban experience.",-1.30261485,36.82884201813725
+Mombasa,kenya,KEN,africa,"Lively markets, stunning beaches, and a fusion of cultures create a vibrant atmosphere where you can feel the ocean breeze and hear Swahili melodies.",-4.05052,39.667169
+Bishkek,kyrgyzstan,KGZ,asia,Wide boulevards lined with Soviet-era architecture and bustling bazaars create a unique blend of history and vibrant local life.,42.8777895,74.6066926
+Colombo,sri lanka,LKA,asia,"Lively streets filled with the aroma of spices, historic temples, and a coastal breeze create a vibrant and welcoming atmosphere.",6.9388614,79.8542005
+Galle,sri lanka,LKA,asia,"Charming cobblestone streets, colonial architecture, and the salty breeze of the ocean create a serene and timeless atmosphere.",6.0328139,80.214955
+Kandy,sri lanka,LKA,asia,"Lush hills, serene lakes, and the scent of temple incense create a tranquil atmosphere that's both spiritually uplifting and visually stunning.",7.2931208,80.6350358
+Nuwara Eliya,sri lanka,LKA,asia,"Mist-covered hills and lush tea plantations create a cool, serene atmosphere, perfect for unwinding and soaking in nature's beauty.",7.012402,80.7571612
+Maseru,lesotho,LSO,africa,"Surrounded by dramatic landscapes, this city offers a blend of bustling markets, friendly locals, and a unique cultural tapestry to explore.",-29.310054,27.478222
+Luxembourg City,luxembourg,LUX,europe,"Charming cobblestone streets wind through lush valleys and historic fortresses, creating a serene yet vibrant atmosphere that's both inviting and intriguing.",49.6112768,6.129799
+Monaco,monaco,MCO,europe,"Glamorous streets lined with luxury cars and yachts, where the Mediterranean breeze mingles with the scent of high-end cuisine and opulence.",43.7323492,7.4276832
+Antananarivo,madagascar,MDG,africa,"Bustling streets filled with lively markets and the aroma of street food create an energetic vibe, surrounded by rolling hills and unique architecture.",-18.9100122,47.5255809
+Malé,maldives,MDV,asia,"Vibrant markets, azure waters, and the gentle hum of island life create an inviting atmosphere that feels both exotic and familiar.",4.1779879,73.5107387
+Maputo,mozambique,MOZ,africa,"Bustling markets, vibrant street life, and the rhythmic sounds of local music create a lively and colorful atmosphere to explore.",-25.966213,32.56745
+Beira,mozambique,MOZ,africa,Warm ocean breezes mix with the vibrant energy of local markets and the relaxed charm of coastal streets lined with casuarina trees.,-19.828707,34.841782
+Blantyre,malawi,MWI,africa,"A city where bustling markets, friendly locals, and the aroma of street food create a vibrant and welcoming atmosphere.",-15.7862543,35.0035694
+Granada,nicaragua,NIC,north_america,"Cobblestone streets lined with colorful colonial buildings and the distant scent of tropical fruits create a charming, laid-back atmosphere.",11.9303801,-85.9535897
+Salalah,oman,OMN,middle_east,"Lush green landscapes meet the Arabian Sea, creating a serene atmosphere filled with the scent of frankincense and the sound of gentle waves.",17.0174945,54.1010923
+Muscat,oman,OMN,middle_east,"Golden desert landscapes meet the azure sea, creating a serene backdrop for exploring traditional souks, grand mosques, and coastal promenades.",23.5882019,58.3829448
+Lahore,pakistan,PAK,asia,"Bustling streets alive with vibrant colors and the aroma of spices, offering a rich tapestry of history, culture, and warm hospitality.",31.5656822,74.3141829
+Islamabad,pakistan,PAK,asia,"Serene tree-lined streets, vibrant markets, and stunning views of the Margalla Hills offer a peaceful yet dynamic experience.",33.6938118,73.0651511
+Bocas del Toro,panama,PAN,north_america,"Crystal-clear waters lap against palm-fringed beaches, while vibrant marine life and laid-back island vibes create an unforgettable tropical escape.",9.26847485,-81.99322424821933
+Panama City,panama,PAN,north_america,Humid evenings and skyscraper views contrast beautifully with colorful historic quarters and lush jungle landscapes within easy reach.,8.9714493,-79.5341802
+Manila,philippines,PHL,asia,"Bustling streets filled with vibrant jeepneys and the aroma of street food create an exciting, sensory-rich experience that's uniquely captivating.",14.5904492,120.9803621
+Davao,philippines,PHL,asia,"Lush landscapes meet urban vibrancy, with bustling markets, serene parks, and the scent of tropical fruits filling the air.",7.0648306,125.6080623
+Cebu,philippines,PHL,asia,"Tropical warmth, vibrant street life, and a mix of modern and historic sites create an inviting atmosphere full of discovery and relaxation.",10.47,123.83
+Palawan,philippines,PHL,asia,"Crystal-clear waters, lush green landscapes, and vibrant marine life create a serene escape where relaxation and adventure blend seamlessly.",11.0798978,120.93734215474105
+Palau,palau,PLW,oceania,"Crystal-clear waters teeming with marine life, lush forests, and a serene atmosphere offer a tranquil escape for nature lovers and adventurers alike.",5.3783537,132.9102573
+Porto,portugal,PRT,europe,"Charming riverside streets, vibrant tiles, and the rich aroma of port wine create a warm and inviting atmosphere perfect for leisurely exploration.",41.1494512,-8.6107884
+Azores,portugal,PRT,europe,"Lush volcanic landscapes, tranquil ocean vistas, and charming villages create a serene atmosphere perfect for unwinding and connecting with nature.",37.80855645,-25.47313739124529
+Madeira,portugal,PRT,europe,"Lush landscapes meet dramatic cliffs, where ocean breezes carry the scent of flowers and adventure awaits around every winding path.",32.751750099999995,-16.98174865726062
+Lagos,portugal,PRT,europe,"Charming cobblestone streets lead to golden beaches and dramatic cliffs, where the ocean breeze mingles with the aroma of grilled seafood.",37.1027964,-8.6728689
+Sintra,portugal,PRT,europe,"Misty mornings reveal enchanting palaces and lush gardens, offering a fairytale-like atmosphere that captivates and inspires wanderlust.",38.79846,-9.3881
+Lisbon,portugal,PRT,europe,"Hillside streets alive with music, pastel-colored buildings, sunlit plazas, and the scent of fresh pastries give this city an irresistible warmth.",38.7077507,-9.1365919
+Algarve,portugal,PRT,europe,"Golden cliffs and serene beaches meet charming villages, where the scent of grilled sardines and the sound of ocean waves fill the air.",37.24480855,-8.150756196275431
+Guimarães,portugal,PRT,europe,"Cobblestone streets, medieval architecture, and a welcoming atmosphere make wandering feel like stepping back in time, rich with history and charm.",41.4417677,-8.2955712
+Vilamoura,portugal,PRT,europe,"Sun-drenched marina views, vibrant nightlife, and golden beaches create a lively yet relaxed atmosphere perfect for unwinding and enjoying coastal charm.",37.0759505,-8.1165401
+Braga,portugal,PRT,europe,"Charming cobblestone streets and ancient churches create a serene atmosphere, while lively squares and local eateries offer a warm, welcoming experience.",41.5510583,-8.4280045
+Funchal,portugal,PRT,europe,"Charming cobblestone streets lined with vibrant flowers, ocean breezes, and the aroma of local cuisine create a welcoming and relaxed atmosphere.",32.6496497,-16.9086783
+Asunción,paraguay,PRY,south_america,"Stroll through sun-dappled streets, where lively markets and the scent of grilled meats create a warm, inviting atmosphere.",-25.2800459,-57.6343814
+Kigali,rwanda,RWA,africa,Rolling hills meet vibrant city life where markets buzz with energy and the aroma of fresh coffee fills the air.,-1.8859597,30.1296751
+Paramaribo,suriname,SUR,south_america,"Lush greenery, colonial architecture, and vibrant street markets create a lively atmosphere where tropical warmth meets cultural diversity.",5.82417645,-55.16628130970069
+Victoria,seychelles,SYC,africa,"Lush tropical landscapes meet the vibrant colors of bustling markets, offering a sensory feast of exotic flavors and warm ocean breezes.",-4.6232085,55.452359
+Seychelles,seychelles,SYC,africa,"Imagine pristine beaches with powdery sand, lush greenery, and the gentle sound of waves, offering a serene and rejuvenating escape.",-4.6574977,55.4540146
+Lomé,togo,TGO,africa,"Bustling markets filled with vibrant textiles and the scent of spices create an energetic atmosphere, while palm-lined beaches offer serene escapes.",6.130419,1.215829
+Nukuʻalofa,tonga,TON,oceania,"Warm ocean breezes and vibrant markets create a welcoming atmosphere, where the gentle rhythm of island life invites endless exploration.",-21.1343401,-175.201808
+Odessa,ukraine,UKR,europe,"Charming cobblestone streets, lively markets, and the gentle sea breeze create a relaxed yet vibrant atmosphere perfect for unwinding and exploring.",46.4843023,30.7322878
+Kyiv,ukraine,UKR,europe,"Strolling through lively squares and historic streets, you'll feel the vibrant energy of a city rich in culture and warm hospitality.",50.4500336,30.5241361
+Lviv,ukraine,UKR,europe,"Cobblestone streets, charming coffeehouses, and a rich tapestry of history and culture create a warm and inviting atmosphere for exploration.",49.841952,24.0315921
+Montevideo,uruguay,URY,south_america,"Strolling along the rambla with the ocean breeze, discovering vibrant street art, and savoring local mate create a welcoming and laid-back vibe.",-34.9058916,-56.1913095
+Punta del Este,uruguay,URY,south_america,"Golden beaches meet vibrant nightlife, creating a lively yet laid-back atmosphere where ocean breezes, art, and music fill the air.",-34.9632342,-54.9439981
+Hoi An,vietnam,VNM,asia,"Charming lantern-lit streets, bustling markets, and the scent of fresh herbs create an inviting atmosphere that feels both timeless and vibrant.",15.8795863,108.3319406
+Da Lat,vietnam,VNM,asia,"Misty mornings, lush pine forests, and vibrant markets create a serene escape with a refreshing blend of nature and local culture.",11.9373899,108.4286786
+Sapa,vietnam,VNM,asia,"Rolling green terraces and misty mountain vistas create a serene escape, where vibrant local cultures and tranquil landscapes embrace visitors warmly.",22.3359246,103.8426749
+Ho Chi Minh City,vietnam,VNM,asia,"Bustling streets filled with the aroma of street food and the hum of scooters create a vibrant, energetic atmosphere that's uniquely captivating.",10.7763897,106.7011391
+Hanoi,vietnam,VNM,asia,"Bustling streets filled with the aroma of street food, lively markets, and serene lakes create a vibrant yet peaceful atmosphere.",21.0283334,105.854041
+Hue,vietnam,VNM,asia,"Ancient temples and serene riverside views offer a peaceful escape, with fragrant street food and friendly locals adding to the charm.",16.4639321,107.5863388
+Ha Long,vietnam,VNM,asia,"Misty limestone karsts rise dramatically from emerald waters, creating a serene and mystical atmosphere perfect for peaceful exploration and reflection.",20.9528365,107.0800003
+Port Vila,vanuatu,VUT,oceania,"Lush greenery meets turquoise waters, where vibrant markets and friendly locals create a warm, inviting atmosphere amidst tropical island breezes.",-17.7414972,168.3150163
+Tanna Island,vanuatu,VUT,oceania,"Lush jungles, volcanic landscapes, and welcoming locals create a serene and adventurous atmosphere, inviting you to explore and unwind.",-19.48577845,169.33450144830016
+Espiritu Santo,vanuatu,VUT,oceania,"Lush rainforests, crystal-clear waters, and vibrant coral reefs create an idyllic setting for adventure and relaxation on this tropical island.",-15.1563411,167.0510705
+Apia,samoa,WSM,oceania,"Lush tropical gardens, vibrant markets, and the gentle sound of waves create a serene and welcoming atmosphere perfect for unwinding.",-13.8345235,-171.7630955
+Harare,zimbabwe,ZWE,africa,"Vibrant streets filled with colorful markets, the scent of blooming jacarandas, and a lively atmosphere make every moment feel uniquely captivating.",-17.8567035,31.0601584
