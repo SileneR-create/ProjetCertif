@@ -245,15 +245,23 @@ def build_candidates() -> dict:
     return candidates
 
 
-def _safe_log_model(model, name: str, input_example) -> None:
-    """Enregistre un modèle dans MLflow sans faire échouer le run en cas de souci.
+def _safe_log_model(model, name: str, input_example, registered_model_name: str = None) -> None:
+    """Logue un modèle dans le run MLflow et, si ``registered_model_name`` est fourni,
+    le pousse également dans le Model Registry (nouvelle version créée automatiquement).
 
     Certains flavors (XGBoost/LightGBM dans une Pipeline) peuvent être refusés par
     la garde de sérialisation de MLflow ; on journalise alors un tag plutôt que de
     perdre les métriques du benchmark.
     """
     try:
-        mlflow.sklearn.log_model(model, name=name, input_example=input_example.head(3))
+        mlflow.sklearn.log_model(
+            model,
+            name=name,
+            input_example=input_example.head(3),
+            registered_model_name=registered_model_name,
+        )
+        if registered_model_name:
+            print(f"   ✅ Model Registry : '{registered_model_name}' (nouvelle version enregistrée)")
     except Exception as e:
         mlflow.set_tag("model_logged", "false")
         print(f"   ({name} : métriques OK, modèle non enregistré → {str(e).splitlines()[0][:90]})")
@@ -351,7 +359,8 @@ def run_classification(best_k: int = 6, n_iter: int = 30, models=None) -> None:
                     # Enregistrement du modèle en best-effort : un échec d'enregistrement
                     # (ex: garde 'untrusted types' MLflow sur les flavors XGB/LGBM) ne doit
                     # PAS invalider les métriques déjà calculées.
-                    _safe_log_model(best, name, X_te)
+                    _registry_name = "TravelMatch_RandomForest" if name == "random_forest" else None
+                    _safe_log_model(best, name, X_te, registered_model_name=_registry_name)
                 except Exception as e:
                     # Vrai échec d'entraînement (ex: classes non contiguës sur clusters
                     # singletons) : on marque le run et on continue le benchmark.
@@ -367,7 +376,7 @@ def run_classification(best_k: int = 6, n_iter: int = 30, models=None) -> None:
         if best_overall[1] is not None:
             mlflow.log_param("best_model", best_overall[0])
             mlflow.log_metric("best_test_f1", best_overall[2])
-            _safe_log_model(best_overall[1], "best_model", X_te)
+            _safe_log_model(best_overall[1], "best_model", X_te, registered_model_name="TravelMatch_BestClassifier")
             print(f"\n🏆 Meilleur modèle : {best_overall[0]} (test f1 = {best_overall[2]:.3f})")
 
 

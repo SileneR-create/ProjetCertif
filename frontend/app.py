@@ -125,7 +125,9 @@ def show_auth_page():
                             f"{API_URL}/auth/login", json={"username": username, "password": password}
                         )
                         if response.status_code == 200:
-                            st.session_state["user"] = response.json()["user"]
+                            data = response.json()
+                            st.session_state["user"] = data["user"]
+                            st.session_state["token"] = data.get("access_token", "")
                             st.rerun()
                         else:
                             st.error(response.json().get("detail", "Identifiants incorrects."))
@@ -182,7 +184,10 @@ def show_auth_page():
                             login_res = requests.post(
                                 f"{API_URL}/auth/login", json={"username": new_username, "password": new_password}
                             )
-                            st.session_state["user"] = login_res.json()["user"]
+                            if login_res.status_code == 200:
+                                login_data = login_res.json()
+                                st.session_state["user"] = login_data["user"]
+                                st.session_state["token"] = login_data.get("access_token", "")
                             st.success("Compte créé ! Bienvenue 🎉")
                             st.rerun()
                         else:

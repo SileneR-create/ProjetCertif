@@ -18,7 +18,7 @@ API_URL = os.getenv("API_URL", "http://localhost:8000")
 
 
 def is_logged_in() -> bool:
-    return st.session_state.get("user") is not None
+    return st.session_state.get("user") is not None and bool(st.session_state.get("token"))
 
 
 def get_current_user() -> dict | None:
